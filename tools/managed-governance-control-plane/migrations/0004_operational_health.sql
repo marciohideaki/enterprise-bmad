@@ -1,1 +1,0 @@
-GRANT SELECT ON hseos_governance.schema_migrations TO hseos_governance_application;
