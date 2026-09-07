@@ -7,11 +7,7 @@ const yaml = require('yaml');
 
 const { canonicalJson } = require('../../../packages/agent-session-store');
 const { DelegatedRuntimeHost, DelegatedRuntimeStore } = require('../../../packages/delegated-runtime-host');
-const {
-  DeepSeekHarnessRuntimeProvider,
-  ProcessAcpPeer,
-  validateDeepSeekAcpComposition,
-} = require('../../../packages/runtime-providers');
+const { DeepSeekHarnessRuntimeProvider, ProcessAcpPeer, validateDeepSeekAcpComposition } = require('../../../packages/runtime-providers');
 const { ExecutionEventLedger } = require('../../mcp-project-state/lib/execution-event-ledger');
 const { createExecutionLedgerFileFixture } = require('../../mcp-project-state/lib/execution-ledger-schema');
 

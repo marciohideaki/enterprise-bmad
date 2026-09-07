@@ -274,7 +274,8 @@ async function createDatabaseBackedControlPlane(options = {}) {
       });
     },
     listAudit: async (input) => (await repository.listAuditEvents(configuration.organization.id)).slice(0, input.page.limit),
-    getReadiness: () => getCurrentReadiness({ organizationId: configuration.organization.id, asOf: new Date().toISOString() }, { repository }),
+    getReadiness: () =>
+      getCurrentReadiness({ organizationId: configuration.organization.id, asOf: new Date().toISOString() }, { repository }),
     // Not an administrative mutation: this is the routine, frequent, low-privilege telemetry a
     // session's own preflight submits about itself (FR-009/FR-024), not a governance content
     // change -- it stays query-scoped like getEffectiveContext, never gated behind the admin

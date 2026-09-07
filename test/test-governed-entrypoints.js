@@ -12,11 +12,7 @@ const {
 } = require('../tools/lib/governed-execution/native-mcp-adapters');
 const { deterministicOperationId } = require('../tools/lib/governed-execution/runtime');
 const { GovernedExecutionScheduler } = require('../tools/lib/governed-execution/scheduler');
-const {
-  CLIENT_CAPABILITIES_META_KEY,
-  CLIENT_INFO_META_KEY,
-  PROTOCOL_VERSION_META_KEY,
-} = require('../tools/lib/mcp-2026-adapter');
+const { CLIENT_CAPABILITIES_META_KEY, CLIENT_INFO_META_KEY, PROTOCOL_VERSION_META_KEY } = require('../tools/lib/mcp-2026-adapter');
 const { MCP_MODERN_PROTOCOL_VERSION } = require('../tools/lib/mcp-protocol');
 
 function contractResolver(exclusiveTools = [], nonCancellableTools = []) {
@@ -143,7 +139,10 @@ test('all four native MCP catalogs are handler-free and call only the governed s
   assert.deepEqual(Object.keys(catalogs).sort(), Object.keys(NATIVE_MCP_SERVERS).sort());
   for (const catalog of Object.values(catalogs)) {
     assert.ok(catalog.length > 0);
-    assert.equal(catalog.some((tool) => Object.hasOwn(tool, 'handler')), false);
+    assert.equal(
+      catalog.some((tool) => Object.hasOwn(tool, 'handler')),
+      false,
+    );
   }
   const governanceDescriptor = catalogs.governance.find((tool) => tool.name === 'query_constitution');
   assert.equal(Object.isFrozen(governanceDescriptor), true);
@@ -153,10 +152,7 @@ test('all four native MCP catalogs are handler-free and call only the governed s
     governanceDescriptor.inputSchema.properties.injected = { type: 'string' };
   }, TypeError);
   assert.equal(
-    Object.hasOwn(
-      loadNativeMcpCatalogs().governance.find((tool) => tool.name === 'query_constitution').inputSchema.properties,
-      'injected',
-    ),
+    Object.hasOwn(loadNativeMcpCatalogs().governance.find((tool) => tool.name === 'query_constitution').inputSchema.properties, 'injected'),
     false,
   );
 
@@ -202,8 +198,16 @@ test('all four native MCP catalogs are handler-free and call only the governed s
       }),
     ),
   );
-  assert.equal(responses.every((response) => !response.error), true);
-  assert.deepEqual(requests.map((request) => request.tool).sort(), Object.values(calls).map(([name]) => name).sort());
+  assert.equal(
+    responses.every((response) => !response.error),
+    true,
+  );
+  assert.deepEqual(
+    requests.map((request) => request.tool).sort(),
+    Object.values(calls)
+      .map(([name]) => name)
+      .sort(),
+  );
   assert.equal(scheduler.snapshot().totals.started, 4);
 });
 

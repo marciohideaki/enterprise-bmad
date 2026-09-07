@@ -462,7 +462,10 @@ function prepareRecordReleaseAttemptCommand(command, options = {}) {
   const rejectionReason = optionalBoundedText(command.rejection_reason, 'rejection reason', 2048);
   const hasSignerEvidence = signerId !== null && signatureAlgorithm !== null && signedDigest !== null;
   if (['signed', 'published'].includes(stage) && !hasSignerEvidence) {
-    throw new GovernanceRepositoryError('signed or published attempts require signer evidence', 'MANAGED_GOVERNANCE_REPOSITORY_INPUT_INVALID');
+    throw new GovernanceRepositoryError(
+      'signed or published attempts require signer evidence',
+      'MANAGED_GOVERNANCE_REPOSITORY_INPUT_INVALID',
+    );
   }
   if (stage === 'planned' && hasSignerEvidence) {
     throw new GovernanceRepositoryError('a planned attempt cannot carry signer evidence', 'MANAGED_GOVERNANCE_REPOSITORY_INPUT_INVALID');
@@ -471,7 +474,10 @@ function prepareRecordReleaseAttemptCommand(command, options = {}) {
     throw new GovernanceRepositoryError('a rejected attempt requires a rejection reason', 'MANAGED_GOVERNANCE_REPOSITORY_INPUT_INVALID');
   }
   if (stage !== 'rejected' && rejectionReason !== null) {
-    throw new GovernanceRepositoryError('only a rejected attempt may carry a rejection reason', 'MANAGED_GOVERNANCE_REPOSITORY_INPUT_INVALID');
+    throw new GovernanceRepositoryError(
+      'only a rejected attempt may carry a rejection reason',
+      'MANAGED_GOVERNANCE_REPOSITORY_INPUT_INVALID',
+    );
   }
   const occurredAt = repositoryClock(options);
   const contentSubject = {
@@ -564,7 +570,10 @@ function prepareRecordShadowReceiptCommand(command, options = {}) {
     throw new GovernanceRepositoryError('shadow receipt is invalid', 'MANAGED_GOVERNANCE_REPOSITORY_INPUT_INVALID', { cause: error.code });
   }
   if (receipt.organization_id !== organizationId) {
-    throw new GovernanceRepositoryError('shadow receipt organization does not match the command', 'MANAGED_GOVERNANCE_REPOSITORY_INPUT_INVALID');
+    throw new GovernanceRepositoryError(
+      'shadow receipt organization does not match the command',
+      'MANAGED_GOVERNANCE_REPOSITORY_INPUT_INVALID',
+    );
   }
   const record = {
     shadow_receipt_id: receipt.receipt_id,
@@ -601,10 +610,15 @@ function prepareRecordReadinessEvaluationCommand(command, options = {}) {
   try {
     report = parseContract(ReadinessReportSchema, command.report, 'readiness report');
   } catch (error) {
-    throw new GovernanceRepositoryError('readiness report is invalid', 'MANAGED_GOVERNANCE_REPOSITORY_INPUT_INVALID', { cause: error.code });
+    throw new GovernanceRepositoryError('readiness report is invalid', 'MANAGED_GOVERNANCE_REPOSITORY_INPUT_INVALID', {
+      cause: error.code,
+    });
   }
   if (report.organization_id !== organizationId) {
-    throw new GovernanceRepositoryError('readiness report organization does not match the command', 'MANAGED_GOVERNANCE_REPOSITORY_INPUT_INVALID');
+    throw new GovernanceRepositoryError(
+      'readiness report organization does not match the command',
+      'MANAGED_GOVERNANCE_REPOSITORY_INPUT_INVALID',
+    );
   }
   const record = {
     readiness_evaluation_id: report.report_id,
@@ -689,7 +703,17 @@ function prepareRecordRecoveryRehearsalCommand(command, options = {}) {
 function prepareRecordNetworkAccessAuditCommand(command, options = {}) {
   assertExactKeys(
     command,
-    ['organization_id', 'actor', 'client_identifier', 'raw_client_ip', 'route_scope', 'matched_allowlist_rule', 'outcome', 'deny_reason', 'evidence_digest'],
+    [
+      'organization_id',
+      'actor',
+      'client_identifier',
+      'raw_client_ip',
+      'route_scope',
+      'matched_allowlist_rule',
+      'outcome',
+      'deny_reason',
+      'evidence_digest',
+    ],
     'network access audit command',
   );
   const organizationId = identifier(command.organization_id, 'organization id');

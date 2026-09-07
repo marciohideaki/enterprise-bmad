@@ -1,8 +1,18 @@
 'use strict';
 
 const crypto = require('node:crypto');
-const { RECEIPT_STATUSES, ReadinessReportSchema, digestCanonical, parseContract } = require('../../../../packages/managed-governance-contracts');
-const { GovernanceRepositoryError, assertGovernanceRepository, parseRepositoryIdentifier, parseRepositoryUuid } = require('../domain/repository-port');
+const {
+  RECEIPT_STATUSES,
+  ReadinessReportSchema,
+  digestCanonical,
+  parseContract,
+} = require('../../../../packages/managed-governance-contracts');
+const {
+  GovernanceRepositoryError,
+  assertGovernanceRepository,
+  parseRepositoryIdentifier,
+  parseRepositoryUuid,
+} = require('../domain/repository-port');
 
 // NFR-011: readiness requires 30 CONSECUTIVE, COMPLETED UTC days. Rather than trust a
 // caller-supplied window_end (which could be miscounted), this module derives it from
@@ -68,12 +78,7 @@ function parseUtcMidnight(value, label) {
     throw invalid(`${label} is invalid`);
   }
   const date = new Date(value);
-  if (
-    date.getUTCHours() !== 0 ||
-    date.getUTCMinutes() !== 0 ||
-    date.getUTCSeconds() !== 0 ||
-    date.getUTCMilliseconds() !== 0
-  ) {
+  if (date.getUTCHours() !== 0 || date.getUTCMinutes() !== 0 || date.getUTCSeconds() !== 0 || date.getUTCMilliseconds() !== 0) {
     throw invalid(`${label} must be exact UTC midnight`, 'MANAGED_GOVERNANCE_READINESS_WINDOW_INVALID');
   }
   return date;
@@ -205,7 +210,12 @@ async function evaluateShadowReadiness(
     parsedRepositoryIds,
     (receipt, repositoryId) => receipt.repository_id === repositoryId,
   );
-  const adapterCoverage = missingCoverage(conclusiveReceipts, windowStartMs, enabledAdapters, (receipt, adapter) => receipt.adapter === adapter);
+  const adapterCoverage = missingCoverage(
+    conclusiveReceipts,
+    windowStartMs,
+    enabledAdapters,
+    (receipt, adapter) => receipt.adapter === adapter,
+  );
 
   const openDriftCount = windowedReceipts.filter((receipt) => receipt.status === 'drift_detected').length;
   const openInvalidContractCount = windowedReceipts.filter((receipt) => receipt.status === 'invalid_local_contract').length;
@@ -227,7 +237,9 @@ async function evaluateShadowReadiness(
 
   const windowStartIso = windowStartDate.toISOString();
   const windowEndIso = windowEndDate.toISOString();
-  const reportId = deterministicReportId(digestCanonical({ organization_id: parsedOrganizationId, window_start: windowStartIso, window_end: windowEndIso }));
+  const reportId = deterministicReportId(
+    digestCanonical({ organization_id: parsedOrganizationId, window_start: windowStartIso, window_end: windowEndIso }),
+  );
 
   const report = parseContract(
     ReadinessReportSchema,

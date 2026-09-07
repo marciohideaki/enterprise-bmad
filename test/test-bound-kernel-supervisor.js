@@ -138,6 +138,7 @@ test('supervisor executes the complete provider/tool loop inside the fixed sandb
   const port = await providerServer(t, observed);
   const project = fixture(t, { port, endpoint: `http://127.0.0.1:${port}/v1` });
   let childEnvironment;
+  let runtimeDirectory;
   const result = await runSupervisedBoundKernel(
     'run',
     {
@@ -155,7 +156,12 @@ test('supervisor executes the complete provider/tool loop inside the fixed sandb
       spawnImpl(binary, args, options) {
         assert.equal(binary, fs.realpathSync(project.binary));
         assert.equal(args.at(-3), '--');
-        assert.match(args.at(-2), /^\/opt\/hideakisolutions\/\.hseos-runtime\/\.provider-runtime-[^/]+\/node$/);
+        runtimeDirectory = path.dirname(args.at(-2));
+        assert.equal(path.dirname(runtimeDirectory), fs.realpathSync(os.tmpdir()));
+        assert.match(path.basename(runtimeDirectory), /^\.provider-runtime-[^/]+$/);
+        assert.equal(path.basename(args.at(-2)), 'node');
+        assert.equal(fs.statSync(runtimeDirectory).mode & 0o777, 0o700);
+        assert.equal(fs.statSync(args.at(-2)).mode & 0o777, 0o500);
         assert.equal(args.at(-1), path.join(ROOT, 'tools', 'cli', 'lib', 'bound-kernel-worker.js'));
         childEnvironment = options.env;
         return spawn(binary, args, options);
@@ -164,6 +170,7 @@ test('supervisor executes the complete provider/tool loop inside the fixed sandb
   );
   try {
     assert.equal(result.status, 'completed');
+    assert.equal(fs.existsSync(runtimeDirectory), false);
     assert.equal(result.operational, false);
     assert.deepEqual(JSON.parse(fs.readFileSync(result.world_state, 'utf8')), { schema_version: 1, value: 'durable' });
     assert.equal(observed.length, 2);

@@ -9,7 +9,11 @@ const { test } = require('node:test');
 const { digestCanonical } = require('../../packages/managed-governance-contracts');
 const { createManagedGovernanceClient, createSnapshotStore } = require('../../packages/managed-governance-client');
 const { REPOSITORY_ID, decision, snapshot } = require('./client-fixtures');
-const { CONSTITUTION_PATH, digestConstitution, runManagedGovernanceSessionPreflight } = require('../../packages/managed-governance-client/session-preflight');
+const {
+  CONSTITUTION_PATH,
+  digestConstitution,
+  runManagedGovernanceSessionPreflight,
+} = require('../../packages/managed-governance-client/session-preflight');
 
 function binding() {
   return {
@@ -130,7 +134,12 @@ test('session preflight stays below the 500 ms p95 budget on the reference fixtu
   );
   fs.mkdirSync(path.join(directory, path.dirname(CONSTITUTION_PATH)), { recursive: true });
   fs.writeFileSync(path.join(directory, CONSTITUTION_PATH), constitution);
-  const remote = { mode: 'managed-shadow', repository_id: REPOSITORY_ID, source_commit: 'a'.repeat(40), artifacts: [{ source_path: CONSTITUTION_PATH.split(path.sep).join('/'), content_digest: digest }] };
+  const remote = {
+    mode: 'managed-shadow',
+    repository_id: REPOSITORY_ID,
+    source_commit: 'a'.repeat(40),
+    artifacts: [{ source_path: CONSTITUTION_PATH.split(path.sep).join('/'), content_digest: digest }],
+  };
   try {
     const samples = [];
     for (let index = 0; index < 50; index += 1) {

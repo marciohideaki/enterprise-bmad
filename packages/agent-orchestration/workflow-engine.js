@@ -82,7 +82,8 @@ class WorkflowEngine {
     const reservations = Object.values(parent.workflow_reservations);
     const reservedCount = reservations.reduce((count, reservation) => count + reservation.step_count, 0);
     const legacyCount = parent.workflow_checkpoints.reduce(
-      (count, checkpoint) => count + (parent.workflow_reservations[checkpoint.workflow_id] ? 0 : checkpoint.completed_step_ids?.length || 1),
+      (count, checkpoint) =>
+        count + (parent.workflow_reservations[checkpoint.workflow_id] ? 0 : checkpoint.completed_step_ids?.length || 1),
       0,
     );
     const alreadyReserved = Boolean(parent.workflow_reservations[workflow.workflow_id]);
@@ -277,7 +278,12 @@ class WorkflowEngine {
     const joinInput = {
       schema_version: CONTRACT_SCHEMA_VERSION,
       provider_id: workflow.subagent_provider_id,
-      request_id: stableId('request', input.request_id, steps.map((step) => step.step_id), 'join'),
+      request_id: stableId(
+        'request',
+        input.request_id,
+        steps.map((step) => step.step_id),
+        'join',
+      ),
       parent_session_id: input.parent_session_id,
       child_session_ids: steps.map((step) => step.child_spec.session_id),
       timeout_ms: workflow.join_timeout_ms,
@@ -322,12 +328,7 @@ class WorkflowEngine {
       request_id: stableId('request', input.request_id, 'manifest'),
       provider_id: workflow.subagent_provider_id,
     };
-    const manifest = validatePortResult(
-      'SubagentProvider',
-      'manifest',
-      this.#provider.manifest(providerQuery),
-      providerQuery,
-    );
+    const manifest = validatePortResult('SubagentProvider', 'manifest', this.#provider.manifest(providerQuery), providerQuery);
     const parent = this.#store.replay(input.parent_session_id);
     if (parent.terminal_event) throw new WorkflowEngineError('workflow parent is terminal', 'WORKFLOW_PARENT_TERMINAL');
     this.#validateScope(parent, workflow, manifest);
@@ -360,7 +361,12 @@ class WorkflowEngine {
             const resumed = await this.#join(input, workflow, phase.steps);
             children.push(...resumed.children);
           } else children.push(...settled);
-          phases.push({ phase_id: phase.phase_id, mode: phase.mode, child_session_ids: checkpoint.child_session_ids, checkpoint_ref: checkpoint.checkpoint_ref });
+          phases.push({
+            phase_id: phase.phase_id,
+            mode: phase.mode,
+            child_session_ids: checkpoint.child_session_ids,
+            checkpoint_ref: checkpoint.checkpoint_ref,
+          });
           evidence.push(eventRef(checkpoint.event_id));
           continue;
         }
@@ -370,7 +376,10 @@ class WorkflowEngine {
             const joined = await this.#join(input, workflow, [step]);
             children.push(...joined.children);
             if (joined.children.some((child) => child.status !== 'completed')) {
-              throw new WorkflowEngineError('pipeline child did not complete', active.cancelled ? 'WORKFLOW_CANCELLED' : 'WORKFLOW_CHILD_FAILED');
+              throw new WorkflowEngineError(
+                'pipeline child did not complete',
+                active.cancelled ? 'WORKFLOW_CANCELLED' : 'WORKFLOW_CHILD_FAILED',
+              );
             }
           }
         } else {
@@ -380,13 +389,21 @@ class WorkflowEngine {
             const joined = await this.#join(input, workflow, group);
             children.push(...joined.children);
             if (joined.children.some((child) => child.status !== 'completed')) {
-              throw new WorkflowEngineError('parallel child did not complete', active.cancelled ? 'WORKFLOW_CANCELLED' : 'WORKFLOW_CHILD_FAILED');
+              throw new WorkflowEngineError(
+                'parallel child did not complete',
+                active.cancelled ? 'WORKFLOW_CANCELLED' : 'WORKFLOW_CHILD_FAILED',
+              );
             }
           }
         }
         this.#assertClaim(input, workflow, active.claimRef);
         const recorded = this.#checkpoint(input, workflow, phase, active.claimRef);
-        phases.push({ phase_id: phase.phase_id, mode: phase.mode, child_session_ids: recorded.child_session_ids, checkpoint_ref: recorded.checkpoint_ref });
+        phases.push({
+          phase_id: phase.phase_id,
+          mode: phase.mode,
+          child_session_ids: recorded.child_session_ids,
+          checkpoint_ref: recorded.checkpoint_ref,
+        });
         evidence.push(eventRef(recorded.event_id));
       }
       const released = this.#release(input, workflow, 'completed', active.claimRef);
@@ -398,7 +415,8 @@ class WorkflowEngine {
       const cancelled = await this.#cancelChildren(input, workflow, active, active.reason || 'workflow teardown after failure');
       children.push(...cancelled);
       const orphan = [...active.children].find((childId) => !terminalChild(this.#store, childId));
-      if (orphan) throw new WorkflowEngineError('workflow teardown left an orphan child', 'WORKFLOW_ORPHAN_CHILD', { child_session_id: orphan });
+      if (orphan)
+        throw new WorkflowEngineError('workflow teardown left an orphan child', 'WORKFLOW_ORPHAN_CHILD', { child_session_id: orphan });
       const status = active.cancelled ? 'cancelled' : 'failed';
       const released = this.#release(input, workflow, status, active.claimRef);
       evidence.push(eventRef(released.event_id));
@@ -427,17 +445,22 @@ class WorkflowEngine {
       }
     }
     const uniqueChildren = [...new Map(result.children.map((child) => [child.child_session_id, child])).values()];
-    return validatePortResult('WorkflowEngine', 'run', {
-      schema_version: CONTRACT_SCHEMA_VERSION,
-      engine_id: this.#engineId,
-      request_id: input.request_id,
-      parent_session_id: input.parent_session_id,
-      workflow_id: input.workflow.workflow_id,
-      status: result.status,
-      phases: result.phases,
-      children: uniqueChildren,
-      evidence_refs: result.evidence,
-    }, input);
+    return validatePortResult(
+      'WorkflowEngine',
+      'run',
+      {
+        schema_version: CONTRACT_SCHEMA_VERSION,
+        engine_id: this.#engineId,
+        request_id: input.request_id,
+        parent_session_id: input.parent_session_id,
+        workflow_id: input.workflow.workflow_id,
+        status: result.status,
+        phases: result.phases,
+        children: uniqueChildren,
+        evidence_refs: result.evidence,
+      },
+      input,
+    );
   }
 
   async cancel(value) {
@@ -451,17 +474,22 @@ class WorkflowEngine {
     active.reason = input.reason;
     const released = this.#release(active.input, active.workflow, 'cancelled', active.claimRef);
     const children = await this.#cancelChildren(active.input, active.workflow, active, input.reason);
-    return validatePortResult('WorkflowEngine', 'cancel', {
-      schema_version: CONTRACT_SCHEMA_VERSION,
-      engine_id: this.#engineId,
-      request_id: input.request_id,
-      parent_session_id: input.parent_session_id,
-      workflow_id: input.workflow_id,
-      status: 'cancelled',
-      phases: [],
-      children,
-      evidence_refs: [eventRef(released.event_id), ...children.map((child) => child.outcome_ref)],
-    }, input);
+    return validatePortResult(
+      'WorkflowEngine',
+      'cancel',
+      {
+        schema_version: CONTRACT_SCHEMA_VERSION,
+        engine_id: this.#engineId,
+        request_id: input.request_id,
+        parent_session_id: input.parent_session_id,
+        workflow_id: input.workflow_id,
+        status: 'cancelled',
+        phases: [],
+        children,
+        evidence_refs: [eventRef(released.event_id), ...children.map((child) => child.outcome_ref)],
+      },
+      input,
+    );
   }
 
   async dispose(value) {
@@ -472,13 +500,18 @@ class WorkflowEngine {
       active.reason = input.reason;
       await this.#cancelChildren(active.input, active.workflow, active, input.reason);
     }
-    return validatePortResult('WorkflowEngine', 'dispose', {
-      schema_version: CONTRACT_SCHEMA_VERSION,
-      request_id: input.request_id,
-      provider_id: this.#engineId,
-      accepted: true,
-      evidence_refs: [],
-    }, input);
+    return validatePortResult(
+      'WorkflowEngine',
+      'dispose',
+      {
+        schema_version: CONTRACT_SCHEMA_VERSION,
+        request_id: input.request_id,
+        provider_id: this.#engineId,
+        accepted: true,
+        evidence_refs: [],
+      },
+      input,
+    );
   }
 }
 

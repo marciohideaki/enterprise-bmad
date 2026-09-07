@@ -84,7 +84,12 @@ function createManagedQueryTools(portFactory = createProjectGovernanceQueryAdapt
     // Read-only by construction: getGovernanceReadiness only ever GETs /api/v1/readiness. There
     // is deliberately no MCP tool for submitting a shadow receipt -- that stays CLI/hook-only
     // (FR-006/ADR-0023: MCP never carries mutable governance authority).
-    tool('get_governance_readiness', 'Read the current 30-day managed-shadow readiness report, if one has been evaluated', 'getGovernanceReadiness', portFactory),
+    tool(
+      'get_governance_readiness',
+      'Read the current 30-day managed-shadow readiness report, if one has been evaluated',
+      'getGovernanceReadiness',
+      portFactory,
+    ),
   ];
 }
 

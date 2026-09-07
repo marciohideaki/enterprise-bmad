@@ -82,12 +82,18 @@ function durableHistory(state, currentTurnId) {
   for (const turnId of state.turn_order) {
     if (turnId === currentTurnId) break;
     const turn = state.turns[turnId];
-    history.push(parseContract(HistorySourceSchema, {
-      source_event_id: turn.input_event_id,
-      source_ref: `session-event://${turn.input_event_id}`,
-      sequence: turn.input_event_sequence,
-      message: turn.input,
-    }, 'durable user history'));
+    history.push(
+      parseContract(
+        HistorySourceSchema,
+        {
+          source_event_id: turn.input_event_id,
+          source_ref: `session-event://${turn.input_event_id}`,
+          sequence: turn.input_event_sequence,
+          message: turn.input,
+        },
+        'durable user history',
+      ),
+    );
     const terminalIndex = turn.model_events.findIndex((event) => event.event_type === 'completed');
     const content = turn.model_events
       .slice(0, terminalIndex < 0 ? 0 : terminalIndex)
@@ -95,12 +101,18 @@ function durableHistory(state, currentTurnId) {
       .map((event) => event.payload.text)
       .join('');
     if (terminalIndex >= 0 && content.length > 0) {
-      history.push(parseContract(HistorySourceSchema, {
-        source_event_id: turn.model_event_ids[terminalIndex],
-        source_ref: `session-event://${turn.model_event_ids[terminalIndex]}`,
-        sequence: turn.model_event_sequences[terminalIndex],
-        message: { role: 'assistant', content },
-      }, 'durable assistant history'));
+      history.push(
+        parseContract(
+          HistorySourceSchema,
+          {
+            source_event_id: turn.model_event_ids[terminalIndex],
+            source_ref: `session-event://${turn.model_event_ids[terminalIndex]}`,
+            sequence: turn.model_event_sequences[terminalIndex],
+            message: { role: 'assistant', content },
+          },
+          'durable assistant history',
+        ),
+      );
     }
   }
   if (history.length > 2048) throw new ContextAssemblyError('durable history exceeds the entry limit');
@@ -136,12 +148,7 @@ class ContextAssembler {
   #countCache = new Map();
   #providerSnapshot;
 
-  constructor({
-    session_store,
-    model_provider_snapshot,
-    compaction_runtime = null,
-    token_counter = new ConservativeUtf8TokenCounter(),
-  }) {
+  constructor({ session_store, model_provider_snapshot, compaction_runtime = null, token_counter = new ConservativeUtf8TokenCounter() }) {
     if (!isRelationalSessionEventStore(session_store)) {
       throw new ContextAssemblyError('session store must be a verified RelationalSessionEventStore');
     }
@@ -375,10 +382,7 @@ class ContextAssembler {
     if (input.current_turn.source_ref !== `session-event://${durableTurn.input_event_id}`) {
       throw new ContextAssemblyError('current turn source does not identify its durable event', 'AGENT_CONTEXT_SOURCE_MISMATCH');
     }
-    const providerEntry = this.#providerSnapshot.resolve(
-      input.session.execution.model_provider_id,
-      input.session.execution.model,
-    );
+    const providerEntry = this.#providerSnapshot.resolve(input.session.execution.model_provider_id, input.session.execution.model);
     const providerManifest = parseContract(ModelProviderManifestSchema, providerEntry.manifest, 'registered model provider manifest');
     const enrichedInput = { ...input, history: durableHistory(durableState, input.turn_id) };
     const budgeted = this.#budget(enrichedInput, providerManifest, remainingSessionTokens(durableState, input.turn_id));
@@ -412,9 +416,7 @@ class ContextAssembler {
         compaction_provider_id: input.overflow_policy === 'compact' ? input.compaction_provider_id : null,
         checkpoint_provider_id: input.overflow_policy === 'compact' ? this.#compactionRuntime.checkpoint_provider_id : null,
         compaction_provider_manifest:
-          input.overflow_policy === 'compact'
-            ? this.#compactionRuntime.resolve(input.compaction_provider_id, 'history_summary')
-            : null,
+          input.overflow_policy === 'compact' ? this.#compactionRuntime.resolve(input.compaction_provider_id, 'history_summary') : null,
         omitted_source_refs: budgeted.omitted_source_refs,
       },
       'context budget report',

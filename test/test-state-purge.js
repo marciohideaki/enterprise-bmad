@@ -28,13 +28,7 @@ const REPO_ROOT = path.join(__dirname, '..');
 const HSEOS_CLI = path.join(REPO_ROOT, 'tools', 'cli', 'hseos-cli.js');
 const MIGRATIONS_DIR = path.join(REPO_ROOT, 'tools', 'mcp-project-state', 'migrations');
 const { runMigrations } = require(path.join(REPO_ROOT, 'tools', 'mcp-project-state', 'lib', 'migrations'));
-const { ExecutionApprovalStore } = require(path.join(
-  REPO_ROOT,
-  'tools',
-  'mcp-project-state',
-  'lib',
-  'execution-approval-store',
-));
+const { ExecutionApprovalStore } = require(path.join(REPO_ROOT, 'tools', 'mcp-project-state', 'lib', 'execution-approval-store'));
 const { deterministicOperationId } = require(path.join(REPO_ROOT, 'tools', 'lib', 'governed-execution', 'runtime'));
 
 let pass = 0;
@@ -134,8 +128,16 @@ it('approval for one run cannot authorize purging another run', () => {
   });
   db.close();
   const result = runCli([
-    'state-purge', 'R-purge', '--directory', tmp, '--force',
-    '--approval-id', approvalId, '--idempotency-key', idempotencyKey, '--json',
+    'state-purge',
+    'R-purge',
+    '--directory',
+    tmp,
+    '--force',
+    '--approval-id',
+    approvalId,
+    '--idempotency-key',
+    idempotencyKey,
+    '--json',
   ]);
   if (result.status === 0 || !result.stderr.includes('EXECUTION_APPROVAL_SCOPE_MISMATCH')) {
     throw new Error(`expected target scope rejection, exit ${result.status}: ${result.stderr}`);

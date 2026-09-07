@@ -98,6 +98,15 @@ into `.agents/` (hash-pinned in `manifest.yaml`); adapters (`.claude/`, `.codex/
 - Default work happens in `feature/*` branches; each isolated task uses its own `task/*` branch. Workflow-specific `fix/*`, `hotfix/*`, `release/*`, `docs/*`, `chore/*`, and `ci/*` branches are allowed when documented by the active workflow.
 - Stacked `feature/*` branch chains are allowed only for real dependency sequencing between phases/waves. Each link remains an isolated `feature/*` branch, must declare its upstream base, must receive commits only through `task/*` worktrees, and must merge in order from the base of the chain toward the tip.
 
+### Resource-Conservative Delivery
+
+- Build, test, package, publish, GitOps merge, rollout, and live-validation stages
+  **MUST run sequentially by default**: complete and verify one deployable unit
+  before starting the next stage or unit.
+- Do not overlap resource-intensive stages unless the user explicitly authorizes
+  that parallelism for the current delivery.
+- Read-only discovery may run in parallel when it has no material resource impact.
+
 ## 5. Task Isolation Flow
 ```bash
 ./scripts/governance/worktree-manager.sh create <task-id> feature/<phase>

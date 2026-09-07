@@ -33,10 +33,7 @@ async function testCheckPassesWithoutWriting() {
 
     await agentCoreCommand.action('compile', { directory: tempDir, check: true });
 
-    assertPass(
-      'compile --check accepts generated artifacts without rewriting them',
-      fs.readFileSync(manifestPath, 'utf8') === before,
-    );
+    assertPass('compile --check accepts generated artifacts without rewriting them', fs.readFileSync(manifestPath, 'utf8') === before);
   });
 }
 

@@ -46,7 +46,11 @@ class McpAdapterError extends Error {
 function stableValue(value) {
   if (Array.isArray(value)) return value.map(stableValue);
   if (value && typeof value === 'object') {
-    return Object.fromEntries(Object.keys(value).sort().map((key) => [key, stableValue(value[key])]));
+    return Object.fromEntries(
+      Object.keys(value)
+        .sort()
+        .map((key) => [key, stableValue(value[key])]),
+    );
   }
   return value;
 }
@@ -86,15 +90,7 @@ function createMcpApprovalStateCodec({ key, ttlMs = 300_000, clock = { now: () =
     } catch {
       throw new McpAdapterError('MRTR requestState payload is invalid', JSON_RPC.INVALID_PARAMS);
     }
-    const expectedKeys = [
-      'binding_digest',
-      'expires_at_ms',
-      'issued_at_ms',
-      'state_ciphertext',
-      'state_iv',
-      'state_tag',
-      'version',
-    ];
+    const expectedKeys = ['binding_digest', 'expires_at_ms', 'issued_at_ms', 'state_ciphertext', 'state_iv', 'state_tag', 'version'];
     const now = new Date(clock.now()).getTime();
     if (
       !payload ||
@@ -316,7 +312,8 @@ function decodeMcpHeaderValue(value) {
   }
   if (encoded[1].length % 4 !== 0) throw new McpAdapterError('Mcp-Param header has malformed base64', JSON_RPC.HEADER_MISMATCH);
   const decoded = Buffer.from(encoded[1], 'base64');
-  if (decoded.toString('base64') !== encoded[1]) throw new McpAdapterError('Mcp-Param header has malformed base64', JSON_RPC.HEADER_MISMATCH);
+  if (decoded.toString('base64') !== encoded[1])
+    throw new McpAdapterError('Mcp-Param header has malformed base64', JSON_RPC.HEADER_MISMATCH);
   try {
     return UTF8_DECODER.decode(decoded);
   } catch {
@@ -369,10 +366,7 @@ function rebaseLocalSchemaRefs(value, prefix) {
 
 function executionEnvelopeSchema(resultSchema = {}) {
   const thenKeyword = 'then';
-  const scopedResultSchema = rebaseLocalSchemaRefs(
-    stableValue(resultSchema),
-    '#/properties/data/oneOf/1/properties/result',
-  );
+  const scopedResultSchema = rebaseLocalSchemaRefs(stableValue(resultSchema), '#/properties/data/oneOf/1/properties/result');
   return {
     $schema: 'https://json-schema.org/draft/2020-12/schema',
     type: 'object',
@@ -454,7 +448,9 @@ function normalizeToolCatalog(tools, limits) {
       outputSchema: tool.outputSchema ? deepFreeze(stableValue(tool.outputSchema)) : null,
     });
   });
-  normalized.sort((left, right) => (left.descriptor.name < right.descriptor.name ? -1 : left.descriptor.name > right.descriptor.name ? 1 : 0));
+  normalized.sort((left, right) =>
+    left.descriptor.name < right.descriptor.name ? -1 : left.descriptor.name > right.descriptor.name ? 1 : 0,
+  );
   return Object.freeze(normalized);
 }
 
@@ -666,7 +662,9 @@ class Mcp2026Adapter {
     this.clock = clock;
     this.catalog = normalizeToolCatalog(tools, { maxSchemaBytes, maxSchemaDepth });
     this.toolByName = new Map(this.catalog.map((entry) => [entry.descriptor.name, entry]));
-    this.catalogRevision = createHash('sha256').update(stableJson(this.catalog.map((entry) => entry.descriptor))).digest('hex');
+    this.catalogRevision = createHash('sha256')
+      .update(stableJson(this.catalog.map((entry) => entry.descriptor)))
+      .digest('hex');
     this.legacyCounters = new Map();
   }
 
@@ -680,7 +678,8 @@ class Mcp2026Adapter {
 
   _recordLegacy(clientInfo) {
     const identity = clientInfo && clientInfo.name ? `${clientInfo.name}@${clientInfo.version || 'unknown'}` : 'unknown';
-    const counterIdentity = this.legacyCounters.has(identity) || this.legacyCounters.size < this.maxLegacyIdentities ? identity : '__overflow__';
+    const counterIdentity =
+      this.legacyCounters.has(identity) || this.legacyCounters.size < this.maxLegacyIdentities ? identity : '__overflow__';
     this.legacyCounters.set(counterIdentity, (this.legacyCounters.get(counterIdentity) || 0) + 1);
     if (typeof this.legacyUsage === 'function') {
       this.legacyUsage({ client_identity: identity, protocol_version: MCP_LEGACY_PROTOCOL_VERSION, sunset: LEGACY_SUNSET });
@@ -765,10 +764,7 @@ class Mcp2026Adapter {
     const params = message.params || {};
     const tool = this.toolByName.get(params.name);
     if (!tool) throw new McpAdapterError(`Unknown tool: ${params.name}`, JSON_RPC.INVALID_PARAMS);
-    if (
-      params.arguments !== undefined &&
-      (!params.arguments || typeof params.arguments !== 'object' || Array.isArray(params.arguments))
-    ) {
+    if (params.arguments !== undefined && (!params.arguments || typeof params.arguments !== 'object' || Array.isArray(params.arguments))) {
       throw new McpAdapterError('Tool arguments must be an object when provided', JSON_RPC.INVALID_PARAMS);
     }
     const argumentsValue = params.arguments === undefined ? {} : params.arguments;
@@ -1013,9 +1009,7 @@ class Mcp2026Adapter {
       const modernMeta = message.params && message.params._meta && message.params._meta[PROTOCOL_VERSION_META_KEY];
       const headerProtocol = requestContext.headers && requestContext.headers['mcp-protocol-version'];
       const requestedEra =
-        modernMeta !== undefined || (headerProtocol !== undefined && headerProtocol !== MCP_LEGACY_PROTOCOL_VERSION)
-          ? 'modern'
-          : 'legacy';
+        modernMeta !== undefined || (headerProtocol !== undefined && headerProtocol !== MCP_LEGACY_PROTOCOL_VERSION) ? 'modern' : 'legacy';
       if (requestContext.transport === 'stdio' && context.era && context.era !== requestedEra) {
         throw new McpAdapterError('MCP protocol era is pinned for this stdio connection', JSON_RPC.UNSUPPORTED_PROTOCOL_VERSION);
       }
@@ -1138,12 +1132,7 @@ function startMcp2026Stdio(adapter, { input = process.stdin, output = process.st
       try {
         validateRpcRequest(message);
         requestId = message.params && message.params.requestId;
-        if (
-          !(
-            (typeof requestId === 'string' && requestId.length > 0) ||
-            (typeof requestId === 'number' && Number.isInteger(requestId))
-          )
-        ) {
+        if (!((typeof requestId === 'string' && requestId.length > 0) || (typeof requestId === 'number' && Number.isInteger(requestId)))) {
           throw new McpAdapterError('Cancellation requestId must be a non-empty string or integer', JSON_RPC.INVALID_PARAMS);
         }
         if (message.params.reason !== undefined && typeof message.params.reason !== 'string') {

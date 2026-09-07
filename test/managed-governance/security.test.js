@@ -187,11 +187,13 @@ test('a direct-tls shared-network profile actually wraps its listener in TLS, no
 
     // And the full request/response cycle over that same TLS listener.
     const body = await new Promise((resolve, reject) => {
-      https.get({ host: '127.0.0.1', port: address.port, path: '/health', rejectUnauthorized: false }, (response) => {
-        const chunks = [];
-        response.on('data', (chunk) => chunks.push(chunk));
-        response.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
-      }).on('error', reject);
+      https
+        .get({ host: '127.0.0.1', port: address.port, path: '/health', rejectUnauthorized: false }, (response) => {
+          const chunks = [];
+          response.on('data', (chunk) => chunks.push(chunk));
+          response.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+        })
+        .on('error', reject);
     });
     assert.equal(JSON.parse(body).data.live, true);
   } finally {
@@ -202,11 +204,21 @@ test('a direct-tls shared-network profile actually wraps its listener in TLS, no
 test('direct-tls fails closed before any socket opens when the certificate or key is missing or invalid', () => {
   const { certificate, privateKey } = generateSelfSignedCertificate();
   assert.throws(
-    () => createManagedGovernanceServer({ services: {}, networkProfile: sharedNetworkProfile(), environment: { HSEOS_TEST_TLS_KEY: privateKey } }),
+    () =>
+      createManagedGovernanceServer({
+        services: {},
+        networkProfile: sharedNetworkProfile(),
+        environment: { HSEOS_TEST_TLS_KEY: privateKey },
+      }),
     /certificate is required/,
   );
   assert.throws(
-    () => createManagedGovernanceServer({ services: {}, networkProfile: sharedNetworkProfile(), environment: { HSEOS_TEST_TLS_CERT: certificate } }),
+    () =>
+      createManagedGovernanceServer({
+        services: {},
+        networkProfile: sharedNetworkProfile(),
+        environment: { HSEOS_TEST_TLS_CERT: certificate },
+      }),
     /private key is required/,
   );
   const { privateKey: unrelatedKey } = generateSelfSignedCertificate();
@@ -224,7 +236,9 @@ test('direct-tls fails closed before any socket opens when the certificate or ke
 test('terminated-upstream deliberately keeps this server on plain HTTP -- TLS is an external reverse-proxy responsibility for that mode', async () => {
   const server = createManagedGovernanceServer({
     services: { health: async () => ({ live: true }) },
-    networkProfile: sharedNetworkProfile({ transport: { mode: 'terminated-upstream', certificate_ref_env: 'HSEOS_TEST_TLS_CERT', private_key_ref_env: 'HSEOS_TEST_TLS_KEY' } }),
+    networkProfile: sharedNetworkProfile({
+      transport: { mode: 'terminated-upstream', certificate_ref_env: 'HSEOS_TEST_TLS_CERT', private_key_ref_env: 'HSEOS_TEST_TLS_KEY' },
+    }),
     environment: {},
   });
   try {

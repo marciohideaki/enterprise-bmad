@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Restore portable agent filenames with explicit collision rejection and stale-output regression coverage.
+- Allocate supervised execution binaries in private temporary directories without workstation-specific installation paths; retain restrictive permissions and cleanup.
+- Keep dependency installation reproducible without tracking generated dependency metadata.
+- Preserve the recovered sequential-delivery rule and document the historical workspace reconciliation inventory.
+
+### Security
+
+- Refresh vulnerable transitive dependencies in the lockfile.
+
+### Tests
+
+- Keep hardlink rejection fixtures on the same filesystem so the security assertion also runs on split temporary mounts.
+- Exercise PostgreSQL integration in the required runtime matrix and normalize repository formatting.
+
 ## [3.4.1] — 2026-09-02
 
 ### Breaking Changes

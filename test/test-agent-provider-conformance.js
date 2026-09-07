@@ -87,15 +87,8 @@ test('canonical local runner verifies only the canonical provider inventory', { 
 });
 
 test('certifying build rejects injected runners, provider specs and catalog loaders', () => {
-  for (const injected of [
-    { runner: defaultRunner },
-    { provider_specs: PROVIDER_SPECS },
-    { catalog_loader: loadCapabilityCatalog },
-  ]) {
-    assert.throws(
-      () => buildAgentProviderConformance({ root: ROOT, verify: true, ...injected }),
-      /unsupported keys/,
-    );
+  for (const injected of [{ runner: defaultRunner }, { provider_specs: PROVIDER_SPECS }, { catalog_loader: loadCapabilityCatalog }]) {
+    assert.throws(() => buildAgentProviderConformance({ root: ROOT, verify: true, ...injected }), /unsupported keys/);
   }
 });
 

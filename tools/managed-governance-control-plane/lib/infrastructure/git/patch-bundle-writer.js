@@ -83,7 +83,8 @@ function assertSafeNewDirectory(target) {
   try {
     stat = fs.lstatSync(resolved);
   } catch (error) {
-    if (error.code !== 'ENOENT') throw new PatchBundleWriterError('bundle destination could not be inspected', 'MANAGED_GOVERNANCE_PATCH_BUNDLE_UNSAFE');
+    if (error.code !== 'ENOENT')
+      throw new PatchBundleWriterError('bundle destination could not be inspected', 'MANAGED_GOVERNANCE_PATCH_BUNDLE_UNSAFE');
     stat = null;
   }
   if (stat) {

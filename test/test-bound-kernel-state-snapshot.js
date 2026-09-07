@@ -5,7 +5,10 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { test } = require('node:test');
 
-const { createExecutionLedgerFileFixture, openExecutionLedgerFileFixture } = require('../tools/mcp-project-state/lib/execution-ledger-schema');
+const {
+  createExecutionLedgerFileFixture,
+  openExecutionLedgerFileFixture,
+} = require('../tools/mcp-project-state/lib/execution-ledger-schema');
 const {
   captureStateSnapshot,
   decodeStateSnapshot,

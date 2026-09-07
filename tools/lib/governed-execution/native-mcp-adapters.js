@@ -44,7 +44,10 @@ function publicDescriptor(tool, source) {
 function loadToolDirectory(directory) {
   const toolsDirectory = path.join(__dirname, '..', '..', directory, 'tools');
   const descriptors = [];
-  for (const filename of fs.readdirSync(toolsDirectory).filter((name) => name.endsWith('.js')).sort()) {
+  for (const filename of fs
+    .readdirSync(toolsDirectory)
+    .filter((name) => name.endsWith('.js'))
+    .sort()) {
     const source = path.join(toolsDirectory, filename);
     const exported = require(source);
     if (!Array.isArray(exported)) {

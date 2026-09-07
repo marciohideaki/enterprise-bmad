@@ -31,7 +31,11 @@ class ApprovalError extends Error {
 function stableValue(value) {
   if (Array.isArray(value)) return value.map(stableValue);
   if (value && typeof value === 'object') {
-    return Object.fromEntries(Object.keys(value).sort().map((key) => [key, stableValue(value[key])]));
+    return Object.fromEntries(
+      Object.keys(value)
+        .sort()
+        .map((key) => [key, stableValue(value[key])]),
+    );
   }
   return value;
 }
@@ -125,9 +129,7 @@ class ExecutionApprovalStore {
     );
     this._get = db.prepare(`SELECT * FROM execution_approvals WHERE approval_id = ?`);
     this._getUse = db.prepare(`SELECT * FROM execution_approval_uses WHERE approval_id = ? OR operation_id = ?`);
-    this._consume = db.prepare(
-      `INSERT INTO execution_approval_uses (approval_id, operation_id, consumed_at) VALUES (?, ?, ?)`,
-    );
+    this._consume = db.prepare(`INSERT INTO execution_approval_uses (approval_id, operation_id, consumed_at) VALUES (?, ?, ?)`);
     this._consumeTransaction = db.transaction((request, onConsumed) => {
       const row = this._get.get(request.approval_id);
       if (!row) throw new ApprovalError('Approval not found', 'EXECUTION_APPROVAL_NOT_FOUND');
@@ -135,8 +137,10 @@ class ExecutionApprovalStore {
         throw new ApprovalError('Approval or operation authorization was already consumed', 'EXECUTION_APPROVAL_REUSED');
       }
       if (row.decision !== 'approved') throw new ApprovalError('Approval decision is not approved', 'EXECUTION_APPROVAL_DENIED');
-      if (row.operation_id !== request.operation_id) throw new ApprovalError('Approval operation scope mismatch', 'EXECUTION_APPROVAL_SCOPE_MISMATCH');
-      if (row.policy_version !== request.policy_version) throw new ApprovalError('Approval policy version mismatch', 'EXECUTION_APPROVAL_POLICY_MISMATCH');
+      if (row.operation_id !== request.operation_id)
+        throw new ApprovalError('Approval operation scope mismatch', 'EXECUTION_APPROVAL_SCOPE_MISMATCH');
+      if (row.policy_version !== request.policy_version)
+        throw new ApprovalError('Approval policy version mismatch', 'EXECUTION_APPROVAL_POLICY_MISMATCH');
       if (row.resource_scope_json !== request.resource_scope_json) {
         throw new ApprovalError('Approval resource scope mismatch', 'EXECUTION_APPROVAL_SCOPE_MISMATCH');
       }

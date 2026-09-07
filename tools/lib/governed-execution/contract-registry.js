@@ -1,11 +1,6 @@
 'use strict';
 
-const REVERSIBILITY_CLASSES = new Set([
-  'read_only',
-  'idempotent_mutation',
-  'compensatable_mutation',
-  'irreversible_mutation',
-]);
+const REVERSIBILITY_CLASSES = new Set(['read_only', 'idempotent_mutation', 'compensatable_mutation', 'irreversible_mutation']);
 const CANCELLATION_POLICIES = new Set(['cooperative', 'non_cancellable']);
 const FAILURE_MODES = new Set(['fail_closed', 'optional_warning']);
 

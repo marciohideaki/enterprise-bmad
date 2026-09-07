@@ -98,9 +98,18 @@ class GooseAdapter {
   }
 
   async _emitAgents(sources, outputDir) {
+    const filenames = new Set();
     for (const agent of sources.agents || []) {
       const agentId = agent.id || agent.code;
       if (!agentId) continue;
+      const filename = String(agentId)
+        .toLowerCase()
+        .replaceAll(/[^a-z0-9]+/g, '-')
+        .replaceAll(/^-+|-+$/g, '');
+      if (!filename || filenames.has(filename)) {
+        throw new Error('Agent identifiers must produce unique nonempty portable filenames');
+      }
+      filenames.add(filename);
       const agentYaml = yaml.stringify({
         id: agentId,
         name: agent.name || agentId,
@@ -108,7 +117,7 @@ class GooseAdapter {
         model: 'claude-sonnet-4-6',
         tools: agent.tool_policy?.allowed_tools || [],
       });
-      await fs.writeFile(path.join(outputDir, '.goose', 'agents', `${agentId}.yaml`), agentYaml, 'utf8');
+      await fs.writeFile(path.join(outputDir, '.goose', 'agents', `${filename}.yaml`), agentYaml, 'utf8');
     }
   }
 

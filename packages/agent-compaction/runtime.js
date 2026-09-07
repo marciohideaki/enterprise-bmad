@@ -119,10 +119,7 @@ class CompactionRuntime {
       throw new CompactionRuntimeError('tool replacements changed call identity or ordering', 'COMPACTION_TOOL_IDENTITY_MISMATCH');
     }
     if (typeof acceptResult !== 'function' || acceptResult(result) !== true) {
-      throw new CompactionRuntimeError(
-        'compaction replacement does not satisfy the caller budget',
-        'COMPACTION_REPLACEMENT_REJECTED',
-      );
+      throw new CompactionRuntimeError('compaction replacement does not satisfy the caller budget', 'COMPACTION_REPLACEMENT_REJECTED');
     }
     if (!checkpoint) {
       const putInput = {
@@ -134,10 +131,7 @@ class CompactionRuntime {
       };
       checkpoint = validatePortResult('CheckpointProvider', 'put', this.#checkpoint.put(putInput), putInput);
     }
-    if (
-      checkpoint.payload_digest !== digest(result) ||
-      canonicalJson(checkpoint.payload) !== canonicalJson(result)
-    ) {
+    if (checkpoint.payload_digest !== digest(result) || canonicalJson(checkpoint.payload) !== canonicalJson(result)) {
       throw new CompactionRuntimeError('checkpoint provider did not preserve the exact payload', 'CHECKPOINT_PAYLOAD_MISMATCH');
     }
     return deepFreeze({

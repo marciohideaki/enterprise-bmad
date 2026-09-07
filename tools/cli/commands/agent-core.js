@@ -58,15 +58,11 @@ async function runCompileCheck(projectDir) {
   }
 
   if (failedChecks.length > 0) {
-    await prompts.log.error(
-      `compile --check: ${failedChecks.length} check(s) failed — run \`hseos agent-core compile\` to regenerate.`,
-    );
+    await prompts.log.error(`compile --check: ${failedChecks.length} check(s) failed — run \`hseos agent-core compile\` to regenerate.`);
     throw new Error(`hseos agent-core compile --check failed: ${failedChecks.length} check(s)`);
   }
 
-  await prompts.log.success(
-    `compile --check: ${integrity.checks.length + audit.checks.length} check(s) passed; no files were written.`,
-  );
+  await prompts.log.success(`compile --check: ${integrity.checks.length + audit.checks.length} check(s) passed; no files were written.`);
 }
 
 function statusLine(check) {

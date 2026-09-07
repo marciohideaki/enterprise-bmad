@@ -107,8 +107,7 @@ function createOperationalExecution({ db, serverId, tools, invokeTool, maxConcur
       timeout_ms: 30_000,
       requires_approval: governance.requires_approval === true,
       exclusive: governance.exclusive === true || EXCLUSIVE_TOOLS.has(name),
-      provider_accepts_idempotency:
-        governance.provider_accepts_idempotency === true || IDEMPOTENT_PROVIDERS.has(name),
+      provider_accepts_idempotency: governance.provider_accepts_idempotency === true || IDEMPOTENT_PROVIDERS.has(name),
       sandbox: null,
       prerequisites: [],
       input_schema: schemaContract(tool.inputSchema, `${name}.input`),

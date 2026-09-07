@@ -69,9 +69,7 @@ class GovernedEntrypointAdapter {
       return assertCanonicalEnvelope(outcome);
     } catch (error) {
       return failureEnvelope(
-        error instanceof Error
-          ? error
-          : new EntrypointAdapterError('Entrypoint adapter failed', 'EXECUTION_ADAPTER_FAILED'),
+        error instanceof Error ? error : new EntrypointAdapterError('Entrypoint adapter failed', 'EXECUTION_ADAPTER_FAILED'),
         operationId,
       );
     }

@@ -52,7 +52,9 @@ async function main() {
     const result = await executeWorkerPayload(await readInput());
     stdout.write(`${JSON.stringify({ ok: true, result })}\n`);
   } catch (error) {
-    stdout.write(`${JSON.stringify({ ok: false, error: { code: error?.code || 'DELEGATED_DEEPSEEK_WORKER_FAILED', message: error?.message || 'worker failed' } })}\n`);
+    stdout.write(
+      `${JSON.stringify({ ok: false, error: { code: error?.code || 'DELEGATED_DEEPSEEK_WORKER_FAILED', message: error?.message || 'worker failed' } })}\n`,
+    );
     process.exitCode = 1;
   }
 }
