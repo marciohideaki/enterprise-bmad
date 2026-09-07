@@ -91,16 +91,20 @@ function validateDriver(driver) {
 function createHostedRuntimeManifest(adapterId, providerId, providerVersion = '1.0.0') {
   const descriptor = HOSTED_RUNTIME_ADAPTERS[adapterId];
   if (!descriptor) throw new RuntimeProviderError('hosted adapter_id is unknown', 'invalid_request');
-  return parseContract(RuntimeProviderManifestSchema, {
-    schema_version: CONTRACT_SCHEMA_VERSION,
-    provider_type: 'runtime',
-    provider_id: providerId,
-    provider_version: providerVersion,
-    conformance_level: descriptor.conformance_level,
-    capabilities: descriptor.capabilities,
-    transport: descriptor.transport,
-    secret_refs: [],
-  }, `${adapterId} runtime provider manifest`);
+  return parseContract(
+    RuntimeProviderManifestSchema,
+    {
+      schema_version: CONTRACT_SCHEMA_VERSION,
+      provider_type: 'runtime',
+      provider_id: providerId,
+      provider_version: providerVersion,
+      conformance_level: descriptor.conformance_level,
+      capabilities: descriptor.capabilities,
+      transport: descriptor.transport,
+      secret_refs: [],
+    },
+    `${adapterId} runtime provider manifest`,
+  );
 }
 
 function operation(providerId, session, terminal = session.terminal) {
@@ -162,26 +166,27 @@ class HostedInstructionsRuntimeProvider {
     let adopted = false;
     try {
       this.#inflightCreates += 1;
-      const createRequest = Promise.resolve().then(() => this.driver.create({
-        adapter_id: this.adapter.adapter_id,
-        protocol: this.adapter.protocol,
-        cwd: path.normalize(cwdValue),
-        limits: structuredClone(input.spec.limits),
-        effect_boundary: 'instructions_only',
-      }));
+      const createRequest = Promise.resolve().then(() =>
+        this.driver.create({
+          adapter_id: this.adapter.adapter_id,
+          protocol: this.adapter.protocol,
+          cwd: path.normalize(cwdValue),
+          limits: structuredClone(input.spec.limits),
+          effect_boundary: 'instructions_only',
+        }),
+      );
       try {
         rawResponse = await this.#bounded(createRequest, input.spec.limits.max_duration_ms, 'hosted create');
-        response = onlyKeys(
-          rawResponse,
-          ['runtime_session_id', 'effect_boundary', 'resumable'],
-          'hosted create response',
-        );
+        response = onlyKeys(rawResponse, ['runtime_session_id', 'effect_boundary', 'resumable'], 'hosted create response');
       } catch (error) {
-        void createRequest.then(async (late) => {
-          if (isRecord(late) && isSafeRuntimeIdentifier(late.runtime_session_id)) {
-            await this.#compensatePublishedId(late.runtime_session_id, 'cancelled');
-          }
-        }, () => {});
+        void createRequest.then(
+          async (late) => {
+            if (isRecord(late) && isSafeRuntimeIdentifier(late.runtime_session_id)) {
+              await this.#compensatePublishedId(late.runtime_session_id, 'cancelled');
+            }
+          },
+          () => {},
+        );
         throw error;
       }
       const runtimeSessionId = identifier(response.runtime_session_id, 'runtime_session_id');
@@ -222,7 +227,8 @@ class HostedInstructionsRuntimeProvider {
     const input = this.#input('send', inputValue);
     this.#available();
     const session = this.#resolve(input);
-    if (session.terminal || session.activeTurn || session.loading) throw new RuntimeProviderError('hosted session cannot accept this turn', 'invalid_request');
+    if (session.terminal || session.activeTurn || session.loading)
+      throw new RuntimeProviderError('hosted session cannot accept this turn', 'invalid_request');
     if (!['user', 'system'].includes(input.message.role) || input.message.tool_calls || input.message.tool_call_id) {
       throw new RuntimeProviderError('hosted L0 accepts instruction text only', 'capability_unavailable');
     }
@@ -244,7 +250,9 @@ class HostedInstructionsRuntimeProvider {
       this.#fail(session, error);
       throw new RuntimeProviderError('hosted send failed', 'protocol_error', { cause: error });
     }
-    void Promise.resolve(request).then((result) => this.#complete(session, result)).catch((error) => this.#fail(session, error));
+    void Promise.resolve(request)
+      .then((result) => this.#complete(session, result))
+      .catch((error) => this.#fail(session, error));
     return operation(this.providerManifest.provider_id, session, false);
   }
 
@@ -284,11 +292,18 @@ class HostedInstructionsRuntimeProvider {
     let resumed = false;
     try {
       const response = onlyKeys(
-        await this.#bounded(Promise.resolve().then(() => this.driver.resume({
-          runtime_session_id: session.runtimeSessionId,
-          expected_sequence: input.expected_sequence,
-          effect_boundary: 'instructions_only',
-        })), session.maxDurationMs, 'hosted resume', session.controller.signal),
+        await this.#bounded(
+          Promise.resolve().then(() =>
+            this.driver.resume({
+              runtime_session_id: session.runtimeSessionId,
+              expected_sequence: input.expected_sequence,
+              effect_boundary: 'instructions_only',
+            }),
+          ),
+          session.maxDurationMs,
+          'hosted resume',
+          session.controller.signal,
+        ),
         ['effect_boundary'],
         'hosted resume response',
       );
@@ -303,9 +318,10 @@ class HostedInstructionsRuntimeProvider {
       resumed = true;
     } catch (error) {
       void this.#safeDriver('cancel', { runtime_session_id: session.runtimeSessionId, reason: 'protocol_error' });
-      const normalized = error instanceof RuntimeProviderError
-        ? error
-        : new RuntimeProviderError('hosted resume failed', 'protocol_error', { cause: error });
+      const normalized =
+        error instanceof RuntimeProviderError
+          ? error
+          : new RuntimeProviderError('hosted resume failed', 'protocol_error', { cause: error });
       this.#fail(session, normalized);
       throw normalized;
     } finally {
@@ -324,21 +340,24 @@ class HostedInstructionsRuntimeProvider {
   events(inputValue) {
     const input = this.#input('events', inputValue);
     const session = this.#resolve(input);
-    if (input.from_sequence > session.sequence) throw new RuntimeProviderError('event cursor is ahead of hosted session', 'invalid_request');
+    if (input.from_sequence > session.sequence)
+      throw new RuntimeProviderError('event cursor is ahead of hosted session', 'invalid_request');
     let cursor = input.from_sequence;
-    return { async *[Symbol.asyncIterator]() {
-      while (true) {
-        const next = session.events.find((event) => event.sequence > cursor);
-        if (next) {
-          cursor = next.sequence;
-          yield next;
-          if (['runtime.session.completed', 'runtime.session.failed'].includes(next.event_type)) return;
-          continue;
+    return {
+      async *[Symbol.asyncIterator]() {
+        while (true) {
+          const next = session.events.find((event) => event.sequence > cursor);
+          if (next) {
+            cursor = next.sequence;
+            yield next;
+            if (['runtime.session.completed', 'runtime.session.failed'].includes(next.event_type)) return;
+            continue;
+          }
+          if (session.terminal) return;
+          await new Promise((resolve) => session.waiters.add(resolve));
         }
-        if (session.terminal) return;
-        await new Promise((resolve) => session.waiters.add(resolve));
-      }
-    } };
+      },
+    };
   }
 
   async cancel(inputValue) {
@@ -346,7 +365,11 @@ class HostedInstructionsRuntimeProvider {
     const session = this.#resolve(input);
     if (!session.terminal) {
       session.controller.abort();
-      this.#terminate(session, 'runtime.session.failed', { error_code: 'cancelled', message: 'hosted session was cancelled', retryable: false });
+      this.#terminate(session, 'runtime.session.failed', {
+        error_code: 'cancelled',
+        message: 'hosted session was cancelled',
+        retryable: false,
+      });
       await this.#safeDriver('cancel', { runtime_session_id: session.runtimeSessionId, reason: input.reason });
     }
     return operation(this.providerManifest.provider_id, session, true);
@@ -356,7 +379,12 @@ class HostedInstructionsRuntimeProvider {
     const input = this.#input('dispose', inputValue);
     const session = this.#resolve(input);
     session.controller.abort();
-    if (!session.terminal) this.#terminate(session, 'runtime.session.failed', { error_code: 'cancelled', message: 'hosted session was disposed', retryable: false });
+    if (!session.terminal)
+      this.#terminate(session, 'runtime.session.failed', {
+        error_code: 'cancelled',
+        message: 'hosted session was disposed',
+        retryable: false,
+      });
     const externallyDisposed = await this.#safeDriver('dispose', { runtime_session_id: session.runtimeSessionId });
     const result = operation(this.providerManifest.provider_id, session, true);
     this.#sessions.delete(session.sessionId);
@@ -370,14 +398,20 @@ class HostedInstructionsRuntimeProvider {
     this.#closeController.abort();
     for (const session of this.#sessions.values()) {
       session.controller.abort();
-      if (!session.terminal) this.#terminate(session, 'runtime.session.failed', { error_code: 'cancelled', message: 'hosted provider was closed', retryable: false });
+      if (!session.terminal)
+        this.#terminate(session, 'runtime.session.failed', {
+          error_code: 'cancelled',
+          message: 'hosted provider was closed',
+          retryable: false,
+        });
     }
     await this.#safeDriver('close');
   }
 
   #input(method, value) {
     const input = validatePortInput('RuntimeProvider', method, value);
-    if (input.provider_id !== this.providerManifest.provider_id) throw new RuntimeProviderError('runtime provider identity mismatch', 'invalid_request');
+    if (input.provider_id !== this.providerManifest.provider_id)
+      throw new RuntimeProviderError('runtime provider identity mismatch', 'invalid_request');
     return input;
   }
 
@@ -390,7 +424,8 @@ class HostedInstructionsRuntimeProvider {
 
   #resolve(input) {
     const session = this.#sessions.get(input.session_id);
-    if (!session || session.runtimeSessionId !== input.runtime_session_id) throw new RuntimeProviderError('hosted session identity mismatch', 'invalid_request');
+    if (!session || session.runtimeSessionId !== input.runtime_session_id)
+      throw new RuntimeProviderError('hosted session identity mismatch', 'invalid_request');
     return session;
   }
 
@@ -431,7 +466,11 @@ class HostedInstructionsRuntimeProvider {
       }
       if (event.type === 'effect.attempted') {
         void this.#safeDriver('cancel', { runtime_session_id: session.runtimeSessionId, reason: 'policy_denied' });
-        this.#terminate(session, 'runtime.session.failed', { error_code: 'policy_denied', message: 'hosted L0 runtime attempted an effect', retryable: false });
+        this.#terminate(session, 'runtime.session.failed', {
+          error_code: 'policy_denied',
+          message: 'hosted L0 runtime attempted an effect',
+          retryable: false,
+        });
         return;
       }
       throw new RuntimeProviderError('unsupported hosted runtime event', 'protocol_error');
@@ -450,36 +489,56 @@ class HostedInstructionsRuntimeProvider {
       return;
     }
     if (result.stop_reason === 'completed') {
-      this.#terminate(session, 'runtime.session.completed', { outcome_ref: `${this.adapter.protocol}://session/${encodeURIComponent(session.runtimeSessionId)}` });
+      this.#terminate(session, 'runtime.session.completed', {
+        outcome_ref: `${this.adapter.protocol}://session/${encodeURIComponent(session.runtimeSessionId)}`,
+      });
       return;
     }
     const mapping = { cancelled: 'cancelled', refused: 'policy_denied', budget_exceeded: 'budget_exceeded' };
-    this.#terminate(session, 'runtime.session.failed', { error_code: mapping[result.stop_reason], message: `hosted runtime stopped: ${result.stop_reason}`, retryable: false });
+    this.#terminate(session, 'runtime.session.failed', {
+      error_code: mapping[result.stop_reason],
+      message: `hosted runtime stopped: ${result.stop_reason}`,
+      retryable: false,
+    });
   }
 
   #fail(session, error) {
     if (session.terminal) return;
     const code = error instanceof RuntimeProviderError ? error.error_code : 'protocol_error';
-    this.#terminate(session, 'runtime.session.failed', { error_code: code, message: code === 'protocol_error' ? 'hosted runtime violated its adapter contract' : error.message, retryable: false });
+    this.#terminate(session, 'runtime.session.failed', {
+      error_code: code,
+      message: code === 'protocol_error' ? 'hosted runtime violated its adapter contract' : error.message,
+      retryable: false,
+    });
   }
 
   #emit(session, eventType, payload) {
     session.sequence += 1;
-    const event = parseContract(RuntimeEventSchema, {
-      schema_version: CONTRACT_SCHEMA_VERSION,
-      provider_id: this.providerManifest.provider_id,
-      runtime_session_id: session.runtimeSessionId,
-      sequence: session.sequence,
-      occurred_at: this.clock(),
-      event_type: eventType,
-      payload,
-    }, 'hosted normalized runtime event');
+    const event = parseContract(
+      RuntimeEventSchema,
+      {
+        schema_version: CONTRACT_SCHEMA_VERSION,
+        provider_id: this.providerManifest.provider_id,
+        runtime_session_id: session.runtimeSessionId,
+        sequence: session.sequence,
+        occurred_at: this.clock(),
+        event_type: eventType,
+        payload,
+      },
+      'hosted normalized runtime event',
+    );
     const bytes = Buffer.byteLength(JSON.stringify(event), 'utf8');
-    if (!['runtime.session.completed', 'runtime.session.failed'].includes(eventType) &&
-        (session.events.length + 1 >= session.maxEvents || session.bytes + bytes > session.maxBytes)) {
+    if (
+      !['runtime.session.completed', 'runtime.session.failed'].includes(eventType) &&
+      (session.events.length + 1 >= session.maxEvents || session.bytes + bytes > session.maxBytes)
+    ) {
       session.sequence -= 1;
       void this.#safeDriver('cancel', { runtime_session_id: session.runtimeSessionId, reason: 'budget_exceeded' });
-      return this.#terminate(session, 'runtime.session.failed', { error_code: 'budget_exceeded', message: 'hosted runtime exceeded its event budget', retryable: false });
+      return this.#terminate(session, 'runtime.session.failed', {
+        error_code: 'budget_exceeded',
+        message: 'hosted runtime exceeded its event budget',
+        retryable: false,
+      });
     }
     session.events.push(event);
     session.bytes += bytes;
@@ -562,8 +621,13 @@ class HostedInstructionsRuntimeProvider {
     let timeout;
     try {
       return await Promise.race([
-        Promise.resolve(request).then(() => true, () => false),
-        new Promise((resolve) => { timeout = setTimeout(() => resolve(false), timeoutMs); }),
+        Promise.resolve(request).then(
+          () => true,
+          () => false,
+        ),
+        new Promise((resolve) => {
+          timeout = setTimeout(() => resolve(false), timeoutMs);
+        }),
       ]);
     } finally {
       if (timeout) clearTimeout(timeout);
@@ -572,21 +636,32 @@ class HostedInstructionsRuntimeProvider {
 
   #armDeadline(session, remainingMs) {
     const startedAt = Date.now();
-    session.deadline = setTimeout(() => {
-      const remaining = remainingMs - Math.max(1, Date.now() - startedAt);
-      if (remaining > 0) return this.#armDeadline(session, remaining);
-      void this.#safeDriver('cancel', { runtime_session_id: session.runtimeSessionId, reason: 'timeout' });
-      this.#terminate(session, 'runtime.session.failed', { error_code: 'timeout', message: 'hosted session exceeded its duration limit', retryable: false });
-    }, Math.min(remainingMs, MAX_TIMER_DELAY_MS));
+    session.deadline = setTimeout(
+      () => {
+        const remaining = remainingMs - Math.max(1, Date.now() - startedAt);
+        if (remaining > 0) return this.#armDeadline(session, remaining);
+        void this.#safeDriver('cancel', { runtime_session_id: session.runtimeSessionId, reason: 'timeout' });
+        this.#terminate(session, 'runtime.session.failed', {
+          error_code: 'timeout',
+          message: 'hosted session exceeded its duration limit',
+          retryable: false,
+        });
+      },
+      Math.min(remainingMs, MAX_TIMER_DELAY_MS),
+    );
   }
 }
 
 class CodexRuntimeProvider extends HostedInstructionsRuntimeProvider {
-  constructor(options) { super({ ...options, adapter_id: 'codex' }); }
+  constructor(options) {
+    super({ ...options, adapter_id: 'codex' });
+  }
 }
 
 class ClaudeCodeRuntimeProvider extends HostedInstructionsRuntimeProvider {
-  constructor(options) { super({ ...options, adapter_id: 'claude-code' }); }
+  constructor(options) {
+    super({ ...options, adapter_id: 'claude-code' });
+  }
 }
 
 module.exports = {

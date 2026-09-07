@@ -154,7 +154,8 @@ function jsonSchemaBreakingChanges(previous, current, location = '$') {
     }
   }
   if (current?.pattern !== undefined && previous?.pattern !== current.pattern) findings.push(`${location}: pattern added or changed`);
-  if (current?.multipleOf !== undefined && previous?.multipleOf !== current.multipleOf) findings.push(`${location}: multipleOf added or changed`);
+  if (current?.multipleOf !== undefined && previous?.multipleOf !== current.multipleOf)
+    findings.push(`${location}: multipleOf added or changed`);
   if (previous?.uniqueItems !== true && current?.uniqueItems === true) findings.push(`${location}: uniqueItems became required`);
   const previousRequired = new Set(previous?.required || []);
   for (const required of current?.required || []) {
@@ -411,15 +412,19 @@ function validateNode(
         }
         if (!/^[a-f0-9]{40}$/.test(initial.parent_revision)) fail(`${label} initial Contract parent_revision must be a full Git SHA`);
         if (!['present', 'absent'].includes(initial.parent_state)) fail(`${label} initial Contract parent_state is invalid`);
-        if (initial.parent_state === 'present' && !/^[a-f0-9]{64}$/.test(initial.sha256 ?? '')) fail(`${label} initial Contract sha256 is invalid`);
+        if (initial.parent_state === 'present' && !/^[a-f0-9]{64}$/.test(initial.sha256 ?? ''))
+          fail(`${label} initial Contract sha256 is invalid`);
         if (!authoritativeRevision) fail(`${label} initial Contract requires an authoritative Git revision`);
-        if (initial.fragment_path !== authoritativeFragmentPath) fail(`${label} initial Contract must inspect the authoritative fragment path`);
+        if (initial.fragment_path !== authoritativeFragmentPath)
+          fail(`${label} initial Contract must inspect the authoritative fragment path`);
         safeResolve(root, initial.fragment_path, `${label}.attributes.initial_contract.fragment_path`);
         try {
           const remote = execFileSync('git', ['-C', root, 'remote', 'get-url', 'origin'], { encoding: 'utf8' }).trim();
-          if (canonicalGitUri(remote) !== canonicalGitUri(initial.repository_uri)) fail(`${label} initial Contract repository origin mismatch`);
+          if (canonicalGitUri(remote) !== canonicalGitUri(initial.repository_uri))
+            fail(`${label} initial Contract repository origin mismatch`);
           const actualParent = execFileSync('git', ['-C', root, 'rev-parse', `${authoritativeRevision}^`], { encoding: 'utf8' }).trim();
-          if (actualParent !== initial.parent_revision) fail(`${label} initial Contract evidence is not the immediate authoritative parent`);
+          if (actualParent !== initial.parent_revision)
+            fail(`${label} initial Contract evidence is not the immediate authoritative parent`);
         } catch (error) {
           if (error.message.includes('initial Contract') || error.message.includes('origin mismatch')) throw error;
           fail(`${label} initial Contract parent is not available from immutable Git evidence`);
@@ -433,11 +438,14 @@ function validateNode(
         } catch {
           parentContents = null;
         }
-        if ((parentContents === null) !== (initial.parent_state === 'absent')) fail(`${label} initial Contract parent_state does not match Git`);
+        if ((parentContents === null) !== (initial.parent_state === 'absent'))
+          fail(`${label} initial Contract parent_state does not match Git`);
         if (parentContents !== null) {
-          if (crypto.createHash('sha256').update(parentContents).digest('hex') !== initial.sha256) fail(`${label} initial Contract parent fragment digest mismatch`);
+          if (crypto.createHash('sha256').update(parentContents).digest('hex') !== initial.sha256)
+            fail(`${label} initial Contract parent fragment digest mismatch`);
           const parent = readYamlText(parentContents, `${initial.parent_revision}:${initial.fragment_path}`);
-          if (parent?.nodes?.some((candidate) => candidate.id === node.id)) fail(`${label} initial Contract already existed before claimed introduction`);
+          if (parent?.nodes?.some((candidate) => candidate.id === node.id))
+            fail(`${label} initial Contract already existed before claimed introduction`);
         }
       }
       if (baseline) {
@@ -473,7 +481,8 @@ function validateNode(
           });
           const fragment = readYamlText(fragmentContents, `${baseline.revision}:${baseline.fragment_path}`);
           const predecessor = fragment?.nodes?.find((candidate) => candidate.id === node.id && candidate.type === 'Contract');
-          if (!predecessor || predecessor.path !== baseline.path) fail(`${label} compatibility baseline does not prove the predecessor id and path`);
+          if (!predecessor || predecessor.path !== baseline.path)
+            fail(`${label} compatibility baseline does not prove the predecessor id and path`);
           execFileSync('git', ['-C', root, 'merge-base', '--is-ancestor', baseline.revision, authoritativeRevision], {
             stdio: ['ignore', 'ignore', 'pipe'],
           });
@@ -822,9 +831,7 @@ function validateGraph(
         fail(`reference implementation ${node.id} cannot be production-ready`);
       }
       if (node.type === 'Module' && node.role === undefined) {
-        const representationEdges = [...edges.values()].filter(
-          (edge) => edge.type === 'SUPERSEDES' && edge.to === node.id,
-        );
+        const representationEdges = [...edges.values()].filter((edge) => edge.type === 'SUPERSEDES' && edge.to === node.id);
         if (
           representationEdges.length !== 1 ||
           nodes.get(representationEdges[0].from)?.type !== 'Package' ||

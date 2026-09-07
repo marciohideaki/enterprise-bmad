@@ -129,9 +129,10 @@ class DeterministicCompactionProvider {
     }
     const afterBytes = Buffer.byteLength(canonicalJson(replacementMessages), 'utf8');
     if (afterBytes >= beforeBytes) throw new TypeError('sources are too small to compact safely');
-    const prunedToolCallIds = input.strategy === 'tool_result_prune'
-      ? input.sources.filter((source) => source.message.role === 'tool').map((source) => source.message.tool_call_id)
-      : [];
+    const prunedToolCallIds =
+      input.strategy === 'tool_result_prune'
+        ? input.sources.filter((source) => source.message.role === 'tool').map((source) => source.message.tool_call_id)
+        : [];
     const result = {
       schema_version: CONTRACT_SCHEMA_VERSION,
       provider_id: this.#manifest.provider_id,

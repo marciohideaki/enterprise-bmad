@@ -192,12 +192,7 @@ function prepareSessionWithHistory(store, spec) {
           tools: [],
           parameters: { max_output_tokens: 1, temperature: null, stop: [] },
         },
-        source_refs: [
-          CONTEXT_PRECEDENCE_REF,
-          'governance://constitution',
-          'project://instructions',
-          `session-event://${turnEventId}`,
-        ],
+        source_refs: [CONTEXT_PRECEDENCE_REF, 'governance://constitution', 'project://instructions', `session-event://${turnEventId}`],
         budget: {
           counter_id: 'token-counter:history-fixture',
           context_limit_tokens: 1000,
@@ -366,9 +361,7 @@ test('truncate_optional keeps recent history first and durably records whole omi
   try {
     const baselineSpec = session('session:context-budget-base');
     const baselineTurn = prepareSession(baseline.store, baselineSpec);
-    const baselineResult = assembler(baseline.store).assembleAndRecord(
-      assemblyInput(baselineSpec, baselineTurn),
-    );
+    const baselineResult = assembler(baseline.store).assembleAndRecord(assemblyInput(baselineSpec, baselineTurn));
 
     const boundedSpec = session('session:context-budget-bounded');
     const history = prepareSessionWithHistory(bounded.store, boundedSpec);
@@ -383,14 +376,26 @@ test('truncate_optional keeps recent history first and durably records whole omi
       ),
     });
     const result = assembler(bounded.store, { manifest: providerManifest(contextLimit) }).assembleAndRecord(input);
-    assert.deepEqual(result.budget.omitted_source_refs, [
-      'memory://low',
-      `session-event://${eventId(`${boundedSpec.session_id}:old:completed`)}`,
-      `session-event://${eventId(`${boundedSpec.session_id}:old:turn`)}`,
-    ].sort());
-    assert.equal(result.request.messages.some((message) => message.content === 'recent answer'), true);
-    assert.equal(result.request.messages.some((message) => message.content === 'recent question'), true);
-    assert.equal(result.request.messages.some((message) => message.content.includes('x'.repeat(100))), false);
+    assert.deepEqual(
+      result.budget.omitted_source_refs,
+      [
+        'memory://low',
+        `session-event://${eventId(`${boundedSpec.session_id}:old:completed`)}`,
+        `session-event://${eventId(`${boundedSpec.session_id}:old:turn`)}`,
+      ].sort(),
+    );
+    assert.equal(
+      result.request.messages.some((message) => message.content === 'recent answer'),
+      true,
+    );
+    assert.equal(
+      result.request.messages.some((message) => message.content === 'recent question'),
+      true,
+    );
+    assert.equal(
+      result.request.messages.some((message) => message.content.includes('x'.repeat(100))),
+      false,
+    );
     assert.equal(
       result.request.messages.some((message) => message.content.includes('important memory')),
       true,
@@ -422,25 +427,26 @@ test('compact pressure atomically records exact lineage and a byte-reconstructab
       compaction_event_id: 'event:context-compaction',
     });
     const beforeEvents = compacted.store.readSession(spec.session_id);
-    const originalContent = beforeEvents.find(
-      (event) => event.event_id === eventId(`${spec.session_id}:old:content`),
-    );
+    const originalContent = beforeEvents.find((event) => event.event_id === eventId(`${spec.session_id}:old:content`));
     const result = assembler(compacted.store, {
       manifest: providerManifest(contextLimit),
       compactionRuntime: compaction.runtime,
     }).assembleAndRecord(input);
     assert.equal(result.compaction_event.event_type, 'compaction.completed');
     assert.deepEqual(
-      compacted.store.readSession(spec.session_id).slice(-2).map((event) => event.event_type),
+      compacted.store
+        .readSession(spec.session_id)
+        .slice(-2)
+        .map((event) => event.event_type),
       ['compaction.completed', 'context.assembled'],
     );
     assert.match(result.request.messages.find((message) => message.content.includes('HSEOS COMPACTION')).content, /sha256:/);
-    assert.equal(result.request.messages.some((message) => message.content === 'recent answer'), true);
-    assert.equal(result.source_refs.includes('session-event://event:context-compaction'), true);
     assert.equal(
-      result.source_refs.includes(`session-event://${eventId(`${spec.session_id}:old:turn`)}`),
-      false,
+      result.request.messages.some((message) => message.content === 'recent answer'),
+      true,
     );
+    assert.equal(result.source_refs.includes('session-event://event:context-compaction'), true);
+    assert.equal(result.source_refs.includes(`session-event://${eventId(`${spec.session_id}:old:turn`)}`), false);
     assert.equal(result.reconstructed.canonical_json, canonicalJson(result.request));
     assert.equal(compacted.store.replay(spec.session_id).compactions.length, 1);
     assert.deepEqual(
@@ -531,7 +537,9 @@ test('durable turn identity, source identity and provider ownership fail closed'
     );
     assert.throws(
       () =>
-        contextAssembler.assembleAndRecord(assemblyInput(spec, turn, { current_turn: { source_ref: 'session-event://wrong', message: turn } })),
+        contextAssembler.assembleAndRecord(
+          assemblyInput(spec, turn, { current_turn: { source_ref: 'session-event://wrong', message: turn } }),
+        ),
       (error) => error instanceof ContextAssemblyError && error.code === 'AGENT_CONTEXT_SOURCE_MISMATCH',
     );
     assert.equal(store.readSession(spec.session_id).length, 2);

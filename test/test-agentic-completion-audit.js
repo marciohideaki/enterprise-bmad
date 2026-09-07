@@ -258,20 +258,37 @@ function coordinatedCancellationFixture(toolStarted) {
     event_registry: eventRegistry,
     ledger,
     approval_store: new ExecutionApprovalStore(db),
-    authority: { async evaluate() { return { allowed: true }; } },
-    policy: { async evaluate() { return { allowed: true, requires_approval: false, policy_version: registered.policy_version, warnings: [] }; } },
-    providers: new Map([['audit-wait-provider', {
-      async execute(_input, { signal }) {
-        toolStarted();
-        return new Promise((resolve, reject) => {
-          signal.addEventListener('abort', () => {
-            const error = new Error('root cancellation reached governed tool');
-            error.outcome = 'cancelled';
-            reject(error);
-          }, { once: true });
-        });
+    authority: {
+      async evaluate() {
+        return { allowed: true };
       },
-    }]]),
+    },
+    policy: {
+      async evaluate() {
+        return { allowed: true, requires_approval: false, policy_version: registered.policy_version, warnings: [] };
+      },
+    },
+    providers: new Map([
+      [
+        'audit-wait-provider',
+        {
+          async execute(_input, { signal }) {
+            toolStarted();
+            return new Promise((resolve, reject) => {
+              signal.addEventListener(
+                'abort',
+                () => {
+                  const error = new Error('root cancellation reached governed tool');
+                  error.outcome = 'cancelled';
+                  reject(error);
+                },
+                { once: true },
+              );
+            });
+          },
+        },
+      ],
+    ]),
     projector: projection,
     clock: { now: () => new Date().toISOString() },
     event_id_factory: randomUUID,
@@ -292,7 +309,10 @@ function coordinatedCancellationFixture(toolStarted) {
       {
         match: (request) => request.session_id.endsWith('root') && request.messages.at(-1).role === 'user',
         events: [
-          { event_type: 'tool_call.delta', payload: { tool_call_id: 'call:audit-wait', name: 'audit.wait', arguments_delta: '{"value":"root"}' } },
+          {
+            event_type: 'tool_call.delta',
+            payload: { tool_call_id: 'call:audit-wait', name: 'audit.wait', arguments_delta: '{"value":"root"}' },
+          },
           { event_type: 'completed', payload: { finish_reason: 'tool_calls', provider_response_ref: 'scripted://root-tool' } },
         ],
       },
@@ -303,7 +323,10 @@ function coordinatedCancellationFixture(toolStarted) {
           { event_type: 'completed', payload: { finish_reason: 'stop', provider_response_ref: 'scripted://late-child' } },
         ],
       },
-      { match: () => true, events: [{ event_type: 'completed', payload: { finish_reason: 'stop', provider_response_ref: 'scripted://unused' } }] },
+      {
+        match: () => true,
+        events: [{ event_type: 'completed', payload: { finish_reason: 'stop', provider_response_ref: 'scripted://unused' } }],
+      },
     ],
   });
   const models = new ModelProviderRegistry();
@@ -472,16 +495,20 @@ test('one root cancellation settles an active tool, workflow, model work, and ev
       subagent_provider_id: 'subagent:audit-cancellation',
       max_parallelism: 1,
       join_timeout_ms: 20_000,
-      phases: [{
-        phase_id: 'phase:audit-cancel',
-        mode: 'pipeline',
-        steps: [{
-          step_id: 'step:audit-child',
-          child_spec: cancellationSessionSpec('session:cancel-child', rootSpec.session_id, { max_children: 1, max_workflow_steps: 0 }),
-          turn_id: 'turn:audit-child',
-          message: { role: 'user', content: 'wait as workflow child' },
-        }],
-      }],
+      phases: [
+        {
+          phase_id: 'phase:audit-cancel',
+          mode: 'pipeline',
+          steps: [
+            {
+              step_id: 'step:audit-child',
+              child_spec: cancellationSessionSpec('session:cancel-child', rootSpec.session_id, { max_children: 1, max_workflow_steps: 0 }),
+              turn_id: 'turn:audit-child',
+              message: { role: 'user', content: 'wait as workflow child' },
+            },
+          ],
+        },
+      ],
     },
   });
   await waitFor(() => fixture.store.readSession('session:cancel-child').some((event) => event.event_type === 'model.request.started'));
@@ -525,7 +552,10 @@ test('one root cancellation settles an active tool, workflow, model work, and ev
     assert.equal(fixture.store.replay(sessionId).terminal_event.event_type, 'session.cancelled');
   }
   const rootEvents = fixture.store.readSession(rootSpec.session_id);
-  assert.equal(rootEvents.some((event) => event.event_type === 'tool.execution.completed'), true);
+  assert.equal(
+    rootEvents.some((event) => event.event_type === 'tool.execution.completed'),
+    true,
+  );
   assert.equal(rootEvents.at(-1).event_type, 'session.cancelled');
 });
 
@@ -539,12 +569,16 @@ test('a non-settling workflow cancellation cannot block root runtime and tool in
   let workflowCancelCalls = 0;
   const never = new Promise(() => {});
   const blockedWorkflow = {
-    run() { return never; },
+    run() {
+      return never;
+    },
     cancel() {
       workflowCancelCalls++;
       return never;
     },
-    async dispose() { return { accepted: true }; },
+    async dispose() {
+      return { accepted: true };
+    },
   };
   const supervisor = new AgentExecutionSupervisor({
     agent_runtime: fixture.runtime,
@@ -567,13 +601,14 @@ test('a non-settling workflow cancellation cannot block root runtime and tool in
   });
   await toolStarted;
   await assert.rejects(
-    () => supervisor.cancelRoot({
-      schema_version: 1,
-      request_id: 'request:blocked-workflow-root-cancel',
-      root_session_id: rootSpec.session_id,
-      reason: 'workflow cancellation is non-cooperative',
-      deadline_ms: 50,
-    }),
+    () =>
+      supervisor.cancelRoot({
+        schema_version: 1,
+        request_id: 'request:blocked-workflow-root-cancel',
+        root_session_id: rootSpec.session_id,
+        reason: 'workflow cancellation is non-cooperative',
+        deadline_ms: 50,
+      }),
     (error) => error.code === 'AGENT_EXECUTION_SETTLEMENT_TIMEOUT',
   );
   await rootRun;
@@ -590,9 +625,15 @@ test('root cancellation cannot relabel a durable completed session as cancelled'
   const journey = await executeJourney(scriptedProvider(providerManifest), providerManifest);
   context.after(() => journey.db.close());
   const inactiveWorkflow = {
-    async run() { throw new Error('not invoked'); },
-    async cancel() { throw new Error('not invoked'); },
-    async dispose() { return { accepted: true }; },
+    async run() {
+      throw new Error('not invoked');
+    },
+    async cancel() {
+      throw new Error('not invoked');
+    },
+    async dispose() {
+      return { accepted: true };
+    },
   };
   const supervisor = new AgentExecutionSupervisor({
     agent_runtime: journey.runtime,
@@ -601,13 +642,14 @@ test('root cancellation cannot relabel a durable completed session as cancelled'
     max_settlement_ms: 1000,
   });
   await assert.rejects(
-    () => supervisor.cancelRoot({
-      schema_version: 1,
-      request_id: 'request:terminal-correlation',
-      root_session_id: 'session:provider-substitution',
-      reason: 'must not rewrite terminal truth',
-      deadline_ms: 1000,
-    }),
+    () =>
+      supervisor.cancelRoot({
+        schema_version: 1,
+        request_id: 'request:terminal-correlation',
+        root_session_id: 'session:provider-substitution',
+        reason: 'must not rewrite terminal truth',
+        deadline_ms: 1000,
+      }),
     (error) => error.code === 'AGENT_EXECUTION_TERMINAL_CONFLICT' && error.details.terminal_event_type === 'session.completed',
   );
   assert.equal(journey.store.replay('session:provider-substitution').terminal_event.event_type, 'session.completed');

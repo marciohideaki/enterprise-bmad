@@ -37,7 +37,10 @@ const tools = loadTools();
 const { mode, port } = parseArgs();
 const fixtureActivation = process.env.NODE_ENV === 'test' && process.env.HSEOS_GOVERNED_EXECUTION_FIXTURE === '1';
 const serverOptions = {
-  serverId: 'swarm', tools, mode, port,
+  serverId: 'swarm',
+  tools,
+  mode,
+  port,
   invokeTool(name, args, context) {
     const tool = tools.get(name);
     if (!tool) throw new Error(`Unknown tool: ${name}`);

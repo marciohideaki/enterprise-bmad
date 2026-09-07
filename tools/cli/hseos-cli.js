@@ -98,11 +98,7 @@ for (const [name, cmd] of Object.entries(commands)) {
   }
 
   // Set action
-  command.action(
-    GOVERNED_CLI_COMMANDS[commandName]
-      ? (...args) => runGovernedCliAction(commandName, cmd.action, args)
-      : cmd.action,
-  );
+  command.action(GOVERNED_CLI_COMMANDS[commandName] ? (...args) => runGovernedCliAction(commandName, cmd.action, args) : cmd.action);
 }
 
 // Parse arguments

@@ -18,9 +18,7 @@
     "version": 1,
     "raw_content": "# Enterprise Constitution\n",
     "structured_content": {
-      "headings": [
-        "Enterprise Constitution"
-      ]
+      "headings": ["Enterprise Constitution"]
     },
     "content_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     "source": {
@@ -53,11 +51,7 @@
     "organization_id": "hideaki-solutions",
     "kind": "prohibition",
     "subject": {
-      "actor_types": [
-        "human",
-        "agent",
-        "automation"
-      ],
+      "actor_types": ["human", "agent", "automation"],
       "roles": []
     },
     "action": "git.commit",
@@ -66,18 +60,10 @@
       "identifiers": []
     },
     "scope": {
-      "organizations": [
-        "hideaki-solutions"
-      ],
-      "repositories": [
-        "*"
-      ],
+      "organizations": ["hideaki-solutions"],
+      "repositories": ["*"],
       "environments": [],
-      "branches": [
-        "main",
-        "master",
-        "develop"
-      ],
+      "branches": ["main", "master", "develop"],
       "stacks": [],
       "capabilities": []
     },
@@ -85,11 +71,7 @@
     "effect": "deny",
     "priority": 900,
     "obligations": [],
-    "enforcement_points": [
-      "preflight",
-      "hook",
-      "cli"
-    ],
+    "enforcement_points": ["preflight", "hook", "cli"],
     "source": {
       "artifact_id": "enterprise-constitution",
       "artifact_version": 1,
@@ -105,9 +87,7 @@
     "organization_id": "hideaki-solutions",
     "control_plane_ref": "managed-control-plane-primary",
     "issuer": "hideaki-governance",
-    "trusted_key_ids": [
-      "governance-signing-2026"
-    ],
+    "trusted_key_ids": ["governance-signing-2026"],
     "failure_policy": "cached-fail-closed",
     "max_snapshot_age_seconds": 86400,
     "created_at": "2026-09-01T00:00:00Z"
@@ -223,9 +203,7 @@
     "issued_at": "2026-09-01T00:00:00Z",
     "expires_at": "2026-09-01T01:00:00Z",
     "enforcement_level": "shadow",
-    "capability_ceiling": [
-      "governance.read"
-    ],
+    "capability_ceiling": ["governance.read"],
     "restrictions": [],
     "nonce": "nonce_1",
     "issuer": "hideaki-governance",
@@ -407,14 +385,9 @@
     "window_days": 30,
     "eligible_sessions": 200,
     "covered_sessions": 196,
-    "repositories_covered": [
-      "7f9f9b79-638c-4138-9a29-8a2406ad9fb8"
-    ],
+    "repositories_covered": ["7f9f9b79-638c-4138-9a29-8a2406ad9fb8"],
     "repositories_missing_evidence": [],
-    "adapters_covered": [
-      "claude-code",
-      "codex"
-    ],
+    "adapters_covered": ["claude-code", "codex"],
     "adapters_missing_evidence": [],
     "preflight_latency_p95_ms": 240,
     "open_drift_count": 0,
@@ -434,9 +407,7 @@
     "profile": "shared-network",
     "listen_host": "192.168.5.70",
     "port": 4319,
-    "allowed_clients": [
-      "192.168.5.0/24"
-    ],
+    "allowed_clients": ["192.168.5.0/24"],
     "trusted_proxies": [],
     "transport": {
       "mode": "direct-tls",

@@ -187,7 +187,16 @@ test('database-backed composition reports ready health and serves the seeded cat
   });
   const pool = {
     async query() {
-      return { rows: [{ version: '0001' }, { version: '0002' }, { version: '0003' }, { version: '0004' }, { version: '0005' }, { version: '0006' }] };
+      return {
+        rows: [
+          { version: '0001' },
+          { version: '0002' },
+          { version: '0003' },
+          { version: '0004' },
+          { version: '0005' },
+          { version: '0006' },
+        ],
+      };
     },
   };
   const composition = await createDatabaseBackedControlPlane({
@@ -264,7 +273,11 @@ async function composedSharedNetworkServer(allowedClients) {
     configPath: filename,
     environment,
     repository,
-    runtimePool: { async query() { return { rows: [] }; } },
+    runtimePool: {
+      async query() {
+        return { rows: [] };
+      },
+    },
     source: source(),
     canonicalRemote: 'https://example.invalid/governance.git',
   });
@@ -281,7 +294,11 @@ test('a fresh install with no network section still enforces loopback-only bindi
     configPath: filename,
     environment: ENVIRONMENT,
     repository,
-    runtimePool: { async query() { return { rows: [] }; } },
+    runtimePool: {
+      async query() {
+        return { rows: [] };
+      },
+    },
     source: source(),
     canonicalRemote: 'https://example.invalid/governance.git',
   });
@@ -353,50 +370,75 @@ test('the approved deployment CIDR 192.168.5.0/24 admits an in-range client and 
 // extracted (never the live repository checkout), with its own dependencies installed exactly as
 // an operator would, then run from that extraction alone -- proving the published artifact is
 // self-contained, not merely that the dry-run file listing looks right.
-test('the packed npm artifact ships no .hseos/state and runs the installed CLI from the extracted package alone', { timeout: 120_000 }, () => {
-  const packedListing = JSON.parse(
-    execFileSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], { cwd: REPO_ROOT, encoding: 'utf8', maxBuffer: 10 * 1024 * 1024 }),
-  )[0];
-  assert.ok(
-    !packedListing.files.some((file) => file.path.startsWith('.hseos/state/')),
-    'the package must never publish .hseos/state/** (spec.md Acceptance Evidence)',
-  );
-
-  const extractionRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'hseos-packed-install-'));
-  try {
-    const packed = JSON.parse(
-      execFileSync('npm', ['pack', '--json', '--ignore-scripts', '--pack-destination', extractionRoot], { cwd: REPO_ROOT, encoding: 'utf8' }),
+test(
+  'the packed npm artifact ships no .hseos/state and runs the installed CLI from the extracted package alone',
+  { timeout: 120_000 },
+  () => {
+    const packedListing = JSON.parse(
+      execFileSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], {
+        cwd: REPO_ROOT,
+        encoding: 'utf8',
+        maxBuffer: 10 * 1024 * 1024,
+      }),
     )[0];
-    execFileSync('tar', ['xzf', packed.filename, '-C', extractionRoot], { cwd: extractionRoot });
-    const packageRoot = path.join(extractionRoot, 'package');
-    assert.ok(!fs.existsSync(path.join(packageRoot, '.hseos', 'state')), 'extracted package must not contain .hseos/state');
-    assert.ok(!fs.existsSync(path.join(packageRoot, '.env')), 'extracted package must not contain a default .env');
     assert.ok(
-      !fs.existsSync(path.join(packageRoot, '.hseos', 'config', 'managed-governance.json')),
-      'extracted package must not ship a runtime managed-governance configuration default',
+      !packedListing.files.some((file) => file.path.startsWith('.hseos/state/')),
+      'the package must never publish .hseos/state/** (spec.md Acceptance Evidence)',
     );
 
-    execFileSync('npm', ['install', '--omit=dev', '--ignore-scripts', '--no-audit', '--no-fund', '--prefix', packageRoot], {
-      cwd: packageRoot,
-      encoding: 'utf8',
-      maxBuffer: 10 * 1024 * 1024,
-    });
-    const version = execFileSync('node', [path.join(packageRoot, 'tools', 'cli', 'hseos-cli.js'), '--version'], {
-      cwd: extractionRoot,
-      encoding: 'utf8',
-    }).trim();
-    assert.match(version, /^\d+\.\d+\.\d+/);
+    const extractionRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'hseos-packed-install-'));
+    try {
+      const packed = JSON.parse(
+        execFileSync('npm', ['pack', '--json', '--ignore-scripts', '--pack-destination', extractionRoot], {
+          cwd: REPO_ROOT,
+          encoding: 'utf8',
+        }),
+      )[0];
+      execFileSync('tar', ['xzf', packed.filename, '-C', extractionRoot], { cwd: extractionRoot });
+      const packageRoot = path.join(extractionRoot, 'package');
+      assert.ok(!fs.existsSync(path.join(packageRoot, '.hseos', 'state')), 'extracted package must not contain .hseos/state');
+      assert.ok(!fs.existsSync(path.join(packageRoot, '.env')), 'extracted package must not contain a default .env');
+      assert.ok(
+        !fs.existsSync(path.join(packageRoot, '.hseos', 'config', 'managed-governance.json')),
+        'extracted package must not ship a runtime managed-governance configuration default',
+      );
 
-    const plan = JSON.parse(
-      execFileSync('node', [path.join(packageRoot, 'tools', 'cli', 'hseos-cli.js'), 'install-plan', '--components', 'runtime:managed-governance-client', '--json'], {
+      execFileSync('npm', ['install', '--omit=dev', '--ignore-scripts', '--no-audit', '--no-fund', '--prefix', packageRoot], {
+        cwd: packageRoot,
+        encoding: 'utf8',
+        maxBuffer: 10 * 1024 * 1024,
+      });
+      const version = execFileSync('node', [path.join(packageRoot, 'tools', 'cli', 'hseos-cli.js'), '--version'], {
         cwd: extractionRoot,
         encoding: 'utf8',
-      }),
-    );
-    const components = JSON.stringify(plan);
-    assert.match(components, /managed-governance-client/);
-    assert.doesNotMatch(components, /managed-shadow|managed-enforced/, 'a fresh install plan must never select a managed profile on its own');
-  } finally {
-    fs.rmSync(extractionRoot, { recursive: true, force: true });
-  }
-});
+      }).trim();
+      assert.match(version, /^\d+\.\d+\.\d+/);
+
+      const plan = JSON.parse(
+        execFileSync(
+          'node',
+          [
+            path.join(packageRoot, 'tools', 'cli', 'hseos-cli.js'),
+            'install-plan',
+            '--components',
+            'runtime:managed-governance-client',
+            '--json',
+          ],
+          {
+            cwd: extractionRoot,
+            encoding: 'utf8',
+          },
+        ),
+      );
+      const components = JSON.stringify(plan);
+      assert.match(components, /managed-governance-client/);
+      assert.doesNotMatch(
+        components,
+        /managed-shadow|managed-enforced/,
+        'a fresh install plan must never select a managed profile on its own',
+      );
+    } finally {
+      fs.rmSync(extractionRoot, { recursive: true, force: true });
+    }
+  },
+);

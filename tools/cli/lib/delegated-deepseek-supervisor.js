@@ -84,7 +84,8 @@ function workerResult(execution, protectedValues) {
   if (!envelope || typeof envelope !== 'object' || typeof envelope.ok !== 'boolean') {
     throw new DelegatedDeepSeekSupervisorError('sandboxed DeepSeek worker returned a malformed envelope');
   }
-  if (!envelope.ok) throw new DelegatedDeepSeekSupervisorError(envelope.error?.message || 'sandboxed DeepSeek worker failed', envelope.error?.code);
+  if (!envelope.ok)
+    throw new DelegatedDeepSeekSupervisorError(envelope.error?.message || 'sandboxed DeepSeek worker failed', envelope.error?.code);
   if (envelope.result?.profile !== PROFILE_ID || envelope.result?.lifecycle !== 'one_shot') {
     throw new DelegatedDeepSeekSupervisorError('sandboxed DeepSeek worker returned an invalid result');
   }
@@ -93,7 +94,8 @@ function workerResult(execution, protectedValues) {
 
 async function runSupervisedDelegatedDeepSeek(options = {}, dependencies = {}) {
   if (!options || typeof options !== 'object' || Array.isArray(options)) throw new DelegatedDeepSeekSupervisorError('options are invalid');
-  if (typeof options.binding !== 'string' || options.binding.length === 0) throw new DelegatedDeepSeekSupervisorError('binding is required');
+  if (typeof options.binding !== 'string' || options.binding.length === 0)
+    throw new DelegatedDeepSeekSupervisorError('binding is required');
   const projectDir = canonicalDirectory(options.projectDir || process.cwd(), 'projectDir');
   const sourceEnvironment = options.environment || process.env;
   const bindingPath = fs.realpathSync(path.resolve(options.binding));

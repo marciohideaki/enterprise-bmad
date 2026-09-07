@@ -39,7 +39,10 @@ function assertNetworkProfile(profile) {
     throw new NetworkAdmissionError(`unsupported network profile: ${profile.profile}`, 'MANAGED_GOVERNANCE_NETWORK_PROFILE_INVALID');
   }
   if (typeof profile.listen_host !== 'string' || profile.listen_host.length === 0 || !Number.isInteger(profile.port)) {
-    throw new NetworkAdmissionError('shared-network profile requires an explicit listen host and port', 'MANAGED_GOVERNANCE_NETWORK_LISTENER_INVALID');
+    throw new NetworkAdmissionError(
+      'shared-network profile requires an explicit listen host and port',
+      'MANAGED_GOVERNANCE_NETWORK_LISTENER_INVALID',
+    );
   }
   if (!Array.isArray(profile.allowed_clients) || profile.allowed_clients.length === 0) {
     throw new NetworkAdmissionError(
@@ -52,7 +55,10 @@ function assertNetworkProfile(profile) {
   // because this function is the defense-in-depth backstop for a hand-built profile that never
   // went through parseContract at all.
   if (profile.allowed_clients.some((cidr) => ALLOW_ALL_CIDRS.includes(cidr))) {
-    throw new NetworkAdmissionError('shared-network profile allowlist must not contain an allow-all network', 'MANAGED_GOVERNANCE_NETWORK_ALLOWLIST_ALLOW_ALL');
+    throw new NetworkAdmissionError(
+      'shared-network profile allowlist must not contain an allow-all network',
+      'MANAGED_GOVERNANCE_NETWORK_ALLOWLIST_ALLOW_ALL',
+    );
   }
   if (!profile.transport || !profile.authentication || !profile.rate_limits) {
     throw new NetworkAdmissionError(

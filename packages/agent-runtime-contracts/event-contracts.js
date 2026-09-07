@@ -29,20 +29,27 @@ const CONTEXT_PRECEDENCE_PREAMBLE = [
 ].join('\n');
 const INSTRUCTION_TIER_ORDER = Object.freeze(['constitution', 'project', 'adapter', 'agent', 'skill']);
 
-const UniqueReferencesSchema = z.array(ReferenceSchema).max(4096).superRefine((references, context) => {
-  if (new Set(references).size !== references.length) {
-    context.addIssue({ code: 'custom', message: 'source references must be unique' });
-  }
-  if (Buffer.byteLength(JSON.stringify(references), 'utf8') > 1_048_576) {
-    context.addIssue({ code: 'custom', message: 'source references exceed the event byte limit' });
-  }
-});
+const UniqueReferencesSchema = z
+  .array(ReferenceSchema)
+  .max(4096)
+  .superRefine((references, context) => {
+    if (new Set(references).size !== references.length) {
+      context.addIssue({ code: 'custom', message: 'source references must be unique' });
+    }
+    if (Buffer.byteLength(JSON.stringify(references), 'utf8') > 1_048_576) {
+      context.addIssue({ code: 'custom', message: 'source references exceed the event byte limit' });
+    }
+  });
 
-const UniqueEventIdsSchema = z.array(IdentifierSchema).min(1).max(4096).superRefine((eventIds, context) => {
-  if (new Set(eventIds).size !== eventIds.length) {
-    context.addIssue({ code: 'custom', message: 'source event identifiers must be unique' });
-  }
-});
+const UniqueEventIdsSchema = z
+  .array(IdentifierSchema)
+  .min(1)
+  .max(4096)
+  .superRefine((eventIds, context) => {
+    if (new Set(eventIds).size !== eventIds.length) {
+      context.addIssue({ code: 'custom', message: 'source event identifiers must be unique' });
+    }
+  });
 
 const ContextBudgetReportSchema = strictObject({
   counter_id: IdentifierSchema,
@@ -224,13 +231,11 @@ const SessionEventSchema = z
     sessionEvent('session.created', strictObject({ spec: AgentSessionSpecSchema })),
     sessionEvent('session.resumed', strictObject({ from_sequence: z.number().int().nonnegative() })),
     sessionEvent('session.forked', strictObject({ parent_session_id: IdentifierSchema, parent_sequence: z.number().int().positive() })),
-    sessionEvent('turn.started', strictObject({ turn_id: IdentifierSchema, input: AgentMessageSchema })).superRefine(
-      (event, context) => {
-        if (event.payload.input.role !== 'user') {
-          context.addIssue({ code: 'custom', path: ['payload', 'input', 'role'], message: 'turn input must be a user message' });
-        }
-      },
-    ),
+    sessionEvent('turn.started', strictObject({ turn_id: IdentifierSchema, input: AgentMessageSchema })).superRefine((event, context) => {
+      if (event.payload.input.role !== 'user') {
+        context.addIssue({ code: 'custom', path: ['payload', 'input', 'role'], message: 'turn input must be a user message' });
+      }
+    }),
     sessionEvent('context.assembled', ContextAssembledPayloadSchema),
     sessionEvent(
       'model.request.started',
@@ -313,7 +318,10 @@ const SessionEventSchema = z
         status: z.enum(['completed', 'cancelled', 'failed']),
       }),
     ),
-    sessionEvent('workflow.checkpointed', strictObject({ workflow_id: IdentifierSchema, step_id: IdentifierSchema, checkpoint_ref: ReferenceSchema })),
+    sessionEvent(
+      'workflow.checkpointed',
+      strictObject({ workflow_id: IdentifierSchema, step_id: IdentifierSchema, checkpoint_ref: ReferenceSchema }),
+    ),
     sessionEvent(
       'workflow.phase.checkpointed',
       strictObject({

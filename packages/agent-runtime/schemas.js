@@ -1,12 +1,7 @@
 'use strict';
 
 const { IdentifierSchema, strictObject, z } = require('../agent-runtime-contracts');
-const {
-  ContextSourceSchema,
-  InstructionLayersSchema,
-  MemorySourceSchema,
-  MAX_PARAMETER_BYTES,
-} = require('../agent-context');
+const { ContextSourceSchema, InstructionLayersSchema, MemorySourceSchema, MAX_PARAMETER_BYTES } = require('../agent-context');
 
 const AgentContextProfileSchema = strictObject({
   instructions: InstructionLayersSchema,

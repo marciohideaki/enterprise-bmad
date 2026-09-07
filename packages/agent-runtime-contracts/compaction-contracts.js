@@ -16,10 +16,14 @@ const { AgentMessageSchema } = require('./agent-contracts');
 const MAX_COMPACTION_INPUT_BYTES = 16_777_216;
 const MAX_COMPACTION_OUTPUT_BYTES = 262_144;
 const DigestSchema = z.string().regex(/^sha256:[a-f0-9]{64}$/);
-const SENSITIVE_KEY = /(?:^|_)(?:access_token|api_key|approval_token|auth|authentication|authorization|client_secret|cookie|credential|credentials|password|private_key|refresh_token|secret|session_cookie|set_cookie|token)$/;
-const UniqueIdentifiersSchema = z.array(IdentifierSchema).max(4096).superRefine((values, context) => {
-  if (new Set(values).size !== values.length) context.addIssue({ code: 'custom', message: 'identifiers must be unique' });
-});
+const SENSITIVE_KEY =
+  /(?:^|_)(?:access_token|api_key|approval_token|auth|authentication|authorization|client_secret|cookie|credential|credentials|password|private_key|refresh_token|secret|session_cookie|set_cookie|token)$/;
+const UniqueIdentifiersSchema = z
+  .array(IdentifierSchema)
+  .max(4096)
+  .superRefine((values, context) => {
+    if (new Set(values).size !== values.length) context.addIssue({ code: 'custom', message: 'identifiers must be unique' });
+  });
 
 const CompactionProviderManifestSchema = strictObject({
   schema_version: z.literal(CONTRACT_SCHEMA_VERSION),
@@ -104,7 +108,11 @@ const CompactionResultSchema = strictObject({
       result.replacement_messages[0].tool_call_id ||
       result.replacement_messages[0].tool_calls)
   ) {
-    context.addIssue({ code: 'custom', path: ['replacement_messages'], message: 'history replacement must be one plain assistant message' });
+    context.addIssue({
+      code: 'custom',
+      path: ['replacement_messages'],
+      message: 'history replacement must be one plain assistant message',
+    });
   }
   if (
     result.strategy === 'tool_result_prune' &&
@@ -112,7 +120,11 @@ const CompactionResultSchema = strictObject({
       result.pruned_tool_call_ids.length !== result.replacement_messages.length ||
       canonicalIds(result.replacement_messages.map((message) => message.tool_call_id)) !== canonicalIds(result.pruned_tool_call_ids))
   ) {
-    context.addIssue({ code: 'custom', path: ['replacement_messages'], message: 'tool pruning must preserve one tool message per call id' });
+    context.addIssue({
+      code: 'custom',
+      path: ['replacement_messages'],
+      message: 'tool pruning must preserve one tool message per call id',
+    });
   }
   if (
     result.before.message_count < 1 ||
@@ -166,10 +178,7 @@ const CompactionRecordSchema = strictObject({
   if (record.provider_manifest.provider_id !== record.provider_id) {
     context.addIssue({ code: 'custom', path: ['provider_manifest'], message: 'record manifest identity mismatch' });
   }
-  if (
-    record.before.bytes > record.provider_manifest.max_input_bytes ||
-    record.after.bytes > record.provider_manifest.max_output_bytes
-  ) {
+  if (record.before.bytes > record.provider_manifest.max_input_bytes || record.after.bytes > record.provider_manifest.max_output_bytes) {
     context.addIssue({ code: 'custom', message: 'record exceeds its provider manifest caps' });
   }
 });

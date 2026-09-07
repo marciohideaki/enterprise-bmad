@@ -149,6 +149,20 @@ async function testGooseAdapterEmit() {
     assertPass('.goose/agents/ghost.yaml created', fs.existsSync(path.join(dir, '.goose', 'agents', 'ghost.yaml')));
     assertPass('.goose/hooks-metadata.json created', fs.existsSync(path.join(dir, '.goose', 'hooks-metadata.json')));
 
+    await adapter.emit({ ...sources, agents: [{ code: 'HSEOS-MASTER' }] }, dir);
+    assertPass('agent filenames are portable kebab-case', fs.existsSync(path.join(dir, '.goose', 'agents', 'hseos-master.yaml')));
+    assertPass('narrower agent compilation removes stale output', !fs.existsSync(path.join(dir, '.goose', 'agents', 'ghost.yaml')));
+    for (const agents of [[{ id: 'A_B' }, { id: 'a-b' }], [{ id: '...' }]]) {
+      let rejected = false;
+      try {
+        await adapter.emit({ ...sources, agents }, dir);
+      } catch (error) {
+        rejected = /unique nonempty portable filenames/.test(error.message);
+      }
+      assertPass('ambiguous or empty normalized agent names are rejected', rejected);
+    }
+    await adapter.emit(sources, dir);
+
     const hooksMeta = JSON.parse(fs.readFileSync(path.join(dir, '.goose', 'hooks-metadata.json'), 'utf8'));
     assertPass('hooks-metadata.json has hooks array', Array.isArray(hooksMeta.hooks));
     assertPass(

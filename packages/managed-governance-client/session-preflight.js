@@ -49,7 +49,13 @@ async function submitReceiptBestEffort({ receiptRecorder, adapter, sessionFinger
       repository_id: result.repository_id,
       adapter,
       session_fingerprint:
-        sessionFingerprint || defaultSessionFingerprint({ repositoryId: result.repository_id, adapter, localDigest: result.constitution.local_digest, timestamp: result.checked_at }),
+        sessionFingerprint ||
+        defaultSessionFingerprint({
+          repositoryId: result.repository_id,
+          adapter,
+          localDigest: result.constitution.local_digest,
+          timestamp: result.checked_at,
+        }),
       local_digest: result.constitution.local_digest,
       remote_digest: result.constitution.remote_digest,
       release_digest: null,

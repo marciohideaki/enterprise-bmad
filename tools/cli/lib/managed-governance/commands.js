@@ -7,9 +7,14 @@ const { createDatabaseBackedControlPlane, installManagedGovernance } = require('
 const { runManagedGovernanceSessionPreflight } = require('../../../../packages/managed-governance-client/session-preflight');
 const { loadSidecarConfiguration } = require('../../../managed-governance-control-plane/lib/configuration');
 const { GitGovernanceSource } = require('../../../managed-governance-control-plane/lib/infrastructure/git/governance-source');
-const { PostgresGovernanceRepository } = require('../../../managed-governance-control-plane/lib/infrastructure/postgres/governance-repository');
+const {
+  PostgresGovernanceRepository,
+} = require('../../../managed-governance-control-plane/lib/infrastructure/postgres/governance-repository');
 const { createPostgresPool } = require('../../../managed-governance-control-plane/lib/infrastructure/postgres/pool');
-const { createPostgresDisposableTargetInspector, runRecoveryRehearsal } = require('../../../managed-governance-control-plane/lib/application/rehearse-recovery');
+const {
+  createPostgresDisposableTargetInspector,
+  runRecoveryRehearsal,
+} = require('../../../managed-governance-control-plane/lib/application/rehearse-recovery');
 const { commandError, renderEnvelope } = require('./output');
 
 const DEFAULT_ENDPOINT = 'http://127.0.0.1:4319';
@@ -141,7 +146,10 @@ async function defaultRehearseRecovery({
         // confirmDisposableTarget is never assumed true -- it only reflects whatever the
         // operator actually passed on the command line (--confirm-disposable-target).
         disposableTarget: { connectionStringEnv: disposableTargetEnv, confirmed: confirmDisposableTarget === true },
-        operationalConnectionStringEnvs: [configuration.database.migration_connection_string_env, configuration.database.runtime_connection_string_env],
+        operationalConnectionStringEnvs: [
+          configuration.database.migration_connection_string_env,
+          configuration.database.runtime_connection_string_env,
+        ],
         restoreStartedAt,
         restoreCompletedAt,
         rehearsedAt: new Date().toISOString(),
@@ -326,7 +334,11 @@ function createManagedGovernanceAction(dependencies = {}) {
         regularFile(configPath, '--database-config', MAX_CONTEXT_BYTES, true);
         const actor = parseIdentifier(options.actor, 'actor');
         const profile = readProfile(options.profile);
-        const disposableTargetEnv = environmentReferenceOption(options.disposableTargetEnv, 'disposable target environment reference', '--disposable-target-env');
+        const disposableTargetEnv = environmentReferenceOption(
+          options.disposableTargetEnv,
+          'disposable target environment reference',
+          '--disposable-target-env',
+        );
         const restoreStartedAt = isoTimestampOption(options.restoreStartedAt, '--restore-started-at');
         const restoreCompletedAt = isoTimestampOption(options.restoreCompletedAt, '--restore-completed-at');
         const result = await rehearseRecovery({

@@ -1,7 +1,12 @@
 'use strict';
 
 const { GovernanceReleaseManifestSchema, digestCanonical, parseContract } = require('../../../../packages/managed-governance-contracts');
-const { GovernanceRepositoryError, assertGovernanceRepository, parseRepositoryIdentifier, parseRepositoryUuid } = require('../domain/repository-port');
+const {
+  GovernanceRepositoryError,
+  assertGovernanceRepository,
+  parseRepositoryIdentifier,
+  parseRepositoryUuid,
+} = require('../domain/repository-port');
 
 // Mirrors domain/import-plan.js's shape: a deterministic builder over already-imported
 // catalog state. planGovernanceRelease never writes — release_publication_attempts only
@@ -28,7 +33,10 @@ async function planGovernanceRelease(input, context) {
   // introducing a second, potentially divergent notion of "current commit".
   const projection = await repository.getCatalogProjectionMetadata(organizationId, repositoryId);
   if (!projection) {
-    throw new GovernanceRepositoryError('repository has no active imported catalog to release from', 'MANAGED_GOVERNANCE_RELEASE_PLAN_NOT_READY');
+    throw new GovernanceRepositoryError(
+      'repository has no active imported catalog to release from',
+      'MANAGED_GOVERNANCE_RELEASE_PLAN_NOT_READY',
+    );
   }
   if (projection.source_commit !== input.sourceCommit) {
     throw new GovernanceRepositoryError(

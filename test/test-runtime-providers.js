@@ -293,14 +293,18 @@ test('ACP reattaches a durable session in a fresh provider through load without 
   };
   const result = validatePortResult('RuntimeProvider', 'resume', await restored.resume(resume), resume);
   assert.equal(result.runtime_session_id, 'acp-session-1');
-  assert.deepEqual(peer.calls.map(({ method }) => method), ['initialize', 'session/load']);
+  assert.deepEqual(
+    peer.calls.map(({ method }) => method),
+    ['initialize', 'session/load'],
+  );
 
   const cancel = { ...sessionInput('cancel'), reason: 'operator stop', cascade: true };
   await restored.cancel(cancel);
   const events = await collect(restored, 'session:acp-1', 'acp-session-1', 5);
-  assert.deepEqual(events.map((event) => [event.sequence, event.event_type, event.payload.error_code]), [
-    [6, 'runtime.session.failed', 'cancelled'],
-  ]);
+  assert.deepEqual(
+    events.map((event) => [event.sequence, event.event_type, event.payload.error_code]),
+    [[6, 'runtime.session.failed', 'cancelled']],
+  );
 });
 
 test('ACP reattachment rejects unsupported load and missing durable state without session/new', async () => {
@@ -315,7 +319,10 @@ test('ACP reattachment rejects unsupported load and missing durable state withou
     () => unsupported.resume({ ...sessionInput('resume'), expected_sequence: 1, spec: delegatedSpec() }),
     (error) => error.error_code === 'capability_unavailable',
   );
-  assert.deepEqual(unsupportedPeer.calls.map(({ method }) => method), ['initialize']);
+  assert.deepEqual(
+    unsupportedPeer.calls.map(({ method }) => method),
+    ['initialize'],
+  );
 });
 
 test('concurrent duplicate creates reserve identity before crossing the ACP boundary', async () => {

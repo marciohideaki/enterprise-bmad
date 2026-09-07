@@ -1,8 +1,17 @@
 'use strict';
 
 const crypto = require('node:crypto');
-const { PatchPublicationBundleManifestSchema, digestCanonical, parseContract } = require('../../../../packages/managed-governance-contracts');
-const { GovernanceRepositoryError, assertGovernanceRepository, parseRepositoryIdentifier, parseRepositoryUuid } = require('../domain/repository-port');
+const {
+  PatchPublicationBundleManifestSchema,
+  digestCanonical,
+  parseContract,
+} = require('../../../../packages/managed-governance-contracts');
+const {
+  GovernanceRepositoryError,
+  assertGovernanceRepository,
+  parseRepositoryIdentifier,
+  parseRepositoryUuid,
+} = require('../domain/repository-port');
 const { buildUnifiedPatch, digestPatchText, writePatchBundle } = require('../infrastructure/git/patch-bundle-writer');
 
 // FR-008: a publication request produces a deterministic, reviewable Git change artifact and
@@ -66,16 +75,21 @@ function normalizeChange(change) {
   const before = change.before === undefined ? null : change.before;
   const after = change.after === undefined ? null : change.after;
   if (operation === 'create') {
-    if (before !== null) throw new GovernanceRepositoryError('a create operation must not carry prior content', 'MANAGED_GOVERNANCE_REPOSITORY_INPUT_INVALID');
+    if (before !== null)
+      throw new GovernanceRepositoryError('a create operation must not carry prior content', 'MANAGED_GOVERNANCE_REPOSITORY_INPUT_INVALID');
     assertContent(after, 'new file content');
   } else if (operation === 'delete') {
-    if (after !== null) throw new GovernanceRepositoryError('a delete operation must not carry new content', 'MANAGED_GOVERNANCE_REPOSITORY_INPUT_INVALID');
+    if (after !== null)
+      throw new GovernanceRepositoryError('a delete operation must not carry new content', 'MANAGED_GOVERNANCE_REPOSITORY_INPUT_INVALID');
     assertContent(before, 'prior file content');
   } else {
     assertContent(before, 'prior file content');
     assertContent(after, 'new file content');
     if (before === after) {
-      throw new GovernanceRepositoryError('an update operation must actually change content', 'MANAGED_GOVERNANCE_REPOSITORY_INPUT_INVALID');
+      throw new GovernanceRepositoryError(
+        'an update operation must actually change content',
+        'MANAGED_GOVERNANCE_REPOSITORY_INPUT_INVALID',
+      );
     }
   }
   return Object.freeze({ path, operation, before, after });
@@ -95,7 +109,10 @@ async function generatePatchBundle(
   const seenPaths = new Set();
   for (const change of normalizedChanges) {
     if (seenPaths.has(change.path)) {
-      throw new GovernanceRepositoryError(`duplicate file path in the same bundle: ${change.path}`, 'MANAGED_GOVERNANCE_REPOSITORY_INPUT_INVALID');
+      throw new GovernanceRepositoryError(
+        `duplicate file path in the same bundle: ${change.path}`,
+        'MANAGED_GOVERNANCE_REPOSITORY_INPUT_INVALID',
+      );
     }
     seenPaths.add(change.path);
   }

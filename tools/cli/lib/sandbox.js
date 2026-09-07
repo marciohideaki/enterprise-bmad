@@ -77,16 +77,12 @@ function readSysctl(relPath) {
 }
 
 function probeSandboxRuntime(binary, projectDir, env = process.env) {
-  const result = spawnSync(
-    binary,
-    ['--clean', '--lockdown', '--no-save-config', '--exec', '--', '/usr/bin/true'],
-    {
-      cwd: projectDir,
-      env,
-      stdio: 'ignore',
-      timeout: 10_000,
-    },
-  );
+  const result = spawnSync(binary, ['--clean', '--lockdown', '--no-save-config', '--exec', '--', '/usr/bin/true'], {
+    cwd: projectDir,
+    env,
+    stdio: 'ignore',
+    timeout: 10_000,
+  });
   return Object.freeze({ ok: !result.error && result.status === 0, status: result.status });
 }
 
@@ -293,9 +289,7 @@ function sandboxDoctor(
       title: 'Sandbox runtime probe',
       ok: runtimeReady,
       required,
-      details: runtimeReady
-        ? 'A clean lockdown sandbox executed successfully'
-        : 'A clean lockdown sandbox could not execute',
+      details: runtimeReady ? 'A clean lockdown sandbox executed successfully' : 'A clean lockdown sandbox could not execute',
       remedy: runtimeReady
         ? undefined
         : 'Run ai-jail --clean --lockdown --no-save-config --exec -- /usr/bin/true and correct the reported host policy failure.',
@@ -326,11 +320,10 @@ function sandboxDoctor(
             ? 'AppArmor is not restricting unprivileged user namespaces'
             : runtimeReady
               ? 'AppArmor restricts user namespaces globally, but the sandbox runtime probe passed'
-            : 'AppArmor restricts unprivileged user namespaces; bwrap may need an explicit profile',
-        remedy:
-          apparmorReady
-            ? undefined
-            : 'Install an AppArmor profile for bwrap or relax the system restriction before requiring sandbox.',
+              : 'AppArmor restricts unprivileged user namespaces; bwrap may need an explicit profile',
+        remedy: apparmorReady
+          ? undefined
+          : 'Install an AppArmor profile for bwrap or relax the system restriction before requiring sandbox.',
       });
     }
   } else if (process.platform === 'darwin') {

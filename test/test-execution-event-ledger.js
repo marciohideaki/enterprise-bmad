@@ -76,7 +76,12 @@ test('operational runner stays at v4 and the gated fixture migration creates sch
     applyExecutionLedgerFixtureSchema(db);
     assert.equal(db.pragma('user_version', { simple: true }), 9);
     assert.equal(db.prepare(`SELECT COUNT(*) AS count FROM as_runs WHERE id = 'legacy-run'`).get().count, 1);
-    const columns = new Set(db.prepare(`PRAGMA table_info(execution_events)`).all().map((column) => column.name));
+    const columns = new Set(
+      db
+        .prepare(`PRAGMA table_info(execution_events)`)
+        .all()
+        .map((column) => column.name),
+    );
     for (const field of [
       'position',
       'event_id',
@@ -105,7 +110,9 @@ test('fixture schema gate rejects an operational database path', () => {
 });
 
 test('fixture schema gate rejects symlink and hardlink aliases under /tmp', () => {
-  const outsideRoot = fs.mkdtempSync('/var/tmp/hseos-ledger-gate-target-');
+  // Both paths must share a filesystem for the hardlink case. The target is
+  // still an operational database, never a factory-created ledger fixture.
+  const outsideRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'hseos-ledger-gate-target-'));
   const aliasRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'hseos-ledger-gate-alias-'));
   const target = path.join(outsideRoot, 'operational.sqlite');
   const seed = new Database(target);
@@ -153,14 +160,30 @@ test('compare-and-append produces monotonic stream versions and global positions
     });
 
     assert.equal(first.current_version, 2);
-    assert.deepEqual(first.events.map((item) => item.stream_sequence), [1, 2]);
-    assert.deepEqual([...first.events, ...second.events].map((item) => item.position), [1, 2, 3]);
-    assert.deepEqual(ledger.readStream('execution', 'run-1').map((item) => item.event_id), [eventId('event-1'), eventId('event-2')]);
-    assert.deepEqual(ledger.readStream('execution', 'run-1', { from_version: 2, to_version: 2 }).map((item) => item.event_id), [
-      eventId('event-2'),
-    ]);
-    assert.deepEqual(ledger.readGlobal({ after_position: 1 }).map((item) => item.event_id), [eventId('event-2'), eventId('event-3')]);
-    assert.deepEqual(ledger.readGlobal({ after_position: 1, limit: 1 }).map((item) => item.event_id), [eventId('event-2')]);
+    assert.deepEqual(
+      first.events.map((item) => item.stream_sequence),
+      [1, 2],
+    );
+    assert.deepEqual(
+      [...first.events, ...second.events].map((item) => item.position),
+      [1, 2, 3],
+    );
+    assert.deepEqual(
+      ledger.readStream('execution', 'run-1').map((item) => item.event_id),
+      [eventId('event-1'), eventId('event-2')],
+    );
+    assert.deepEqual(
+      ledger.readStream('execution', 'run-1', { from_version: 2, to_version: 2 }).map((item) => item.event_id),
+      [eventId('event-2')],
+    );
+    assert.deepEqual(
+      ledger.readGlobal({ after_position: 1 }).map((item) => item.event_id),
+      [eventId('event-2'), eventId('event-3')],
+    );
+    assert.deepEqual(
+      ledger.readGlobal({ after_position: 1, limit: 1 }).map((item) => item.event_id),
+      [eventId('event-2')],
+    );
   } finally {
     db.close();
   }
@@ -199,8 +222,7 @@ test('stale expected_version fails with a typed conflict and no implicit retry',
     const ledger = new ExecutionEventLedger(db);
     ledger.append({ aggregate_type: 'execution', aggregate_id: 'run-1', expected_version: 0, events: [event('event-1')] });
     assert.throws(
-      () =>
-        ledger.append({ aggregate_type: 'execution', aggregate_id: 'run-1', expected_version: 0, events: [event('event-2')] }),
+      () => ledger.append({ aggregate_type: 'execution', aggregate_id: 'run-1', expected_version: 0, events: [event('event-2')] }),
       (error) =>
         error instanceof ConcurrencyConflictError &&
         error.code === 'EXECUTION_STREAM_VERSION_CONFLICT' &&
@@ -245,10 +267,7 @@ test('an exact event-id retry is idempotent while changed or partial reuse fails
         }),
       DuplicateEventError,
     );
-    assert.throws(
-      () => ledger.append({ ...request, events: [event('event-1'), event('event-new')] }),
-      DuplicateEventError,
-    );
+    assert.throws(() => ledger.append({ ...request, events: [event('event-1'), event('event-new')] }), DuplicateEventError);
     assert.equal(ledger.getVersion('execution', 'run-1'), 3);
   } finally {
     db.close();
@@ -469,43 +488,53 @@ test('concurrent connections yield unique monotonic sequences with explicit call
 
   try {
     const results = await Promise.all(
-      Array.from({ length: 12 }, (_, index) =>
-        new Promise((resolve, reject) => {
-          const worker = new Worker(workerSource, {
-            eval: true,
-            workerData: { aggregateId: 'concurrent-run', eventId: eventId(`worker-${index}`), filename, modulePath: LEDGER_MODULE },
-          });
-          worker.once('message', resolve);
-          worker.once('error', reject);
-          worker.once('exit', (code) => {
-            if (code !== 0) reject(new Error(`worker exited ${code}`));
-          });
-        }),
+      Array.from(
+        { length: 12 },
+        (_, index) =>
+          new Promise((resolve, reject) => {
+            const worker = new Worker(workerSource, {
+              eval: true,
+              workerData: { aggregateId: 'concurrent-run', eventId: eventId(`worker-${index}`), filename, modulePath: LEDGER_MODULE },
+            });
+            worker.once('message', resolve);
+            worker.once('error', reject);
+            worker.once('exit', (code) => {
+              if (code !== 0) reject(new Error(`worker exited ${code}`));
+            });
+          }),
       ),
     );
     const sequences = results.map((result) => result.sequence).sort((a, b) => a - b);
     const positions = results.map((result) => result.position).sort((a, b) => a - b);
-    assert.deepEqual(sequences, Array.from({ length: 12 }, (_, index) => index + 1));
-    assert.deepEqual(positions, Array.from({ length: 12 }, (_, index) => index + 1));
+    assert.deepEqual(
+      sequences,
+      Array.from({ length: 12 }, (_, index) => index + 1),
+    );
+    assert.deepEqual(
+      positions,
+      Array.from({ length: 12 }, (_, index) => index + 1),
+    );
 
     const independentResults = await Promise.all(
-      Array.from({ length: 12 }, (_, index) =>
-        new Promise((resolve, reject) => {
-          const worker = new Worker(workerSource, {
-            eval: true,
-            workerData: {
-              aggregateId: `independent-run-${index}`,
-              eventId: eventId(`independent-worker-${index}`),
-              filename,
-              modulePath: LEDGER_MODULE,
-            },
-          });
-          worker.once('message', resolve);
-          worker.once('error', reject);
-          worker.once('exit', (code) => {
-            if (code !== 0) reject(new Error(`worker exited ${code}`));
-          });
-        }),
+      Array.from(
+        { length: 12 },
+        (_, index) =>
+          new Promise((resolve, reject) => {
+            const worker = new Worker(workerSource, {
+              eval: true,
+              workerData: {
+                aggregateId: `independent-run-${index}`,
+                eventId: eventId(`independent-worker-${index}`),
+                filename,
+                modulePath: LEDGER_MODULE,
+              },
+            });
+            worker.once('message', resolve);
+            worker.once('error', reject);
+            worker.once('exit', (code) => {
+              if (code !== 0) reject(new Error(`worker exited ${code}`));
+            });
+          }),
       ),
     );
     assert.deepEqual(

@@ -63,7 +63,7 @@ function spec(sessionId, overrides = {}) {
     limits: {
       max_turns: 4,
       max_tokens: 2_000_000,
-    max_duration_ms: 30_000,
+      max_duration_ms: 30_000,
       max_tool_calls: 4,
       max_children: 0,
       max_workflow_steps: 0,
@@ -188,7 +188,11 @@ function setup({
     event_registry: eventRegistry,
     ledger: executionLedger,
     approval_store: new ExecutionApprovalStore(db),
-    authority: { async evaluate() { return { allowed: true }; } },
+    authority: {
+      async evaluate() {
+        return { allowed: true };
+      },
+    },
     policy: {
       async evaluate() {
         return { allowed: true, requires_approval: false, policy_version: registered.policy_version, warnings: [] };
@@ -306,8 +310,14 @@ test('headless runtime satisfies the port and completes a durable multi-step gov
   assert.equal(types.at(-1), 'session.completed');
 
   const rows = fixture.db.prepare(`SELECT aggregate_type, event_type, position FROM execution_events ORDER BY position`).all();
-  const toolIntent = rows.find((row) => row.aggregate_type === 'agent_session' && row.event_type === 'AgentSessionEventRecorded' &&
-    JSON.parse(fixture.db.prepare('SELECT payload_json FROM execution_events WHERE position = ?').get(row.position).payload_json).session_event_json.includes('tool.execution.started'));
+  const toolIntent = rows.find(
+    (row) =>
+      row.aggregate_type === 'agent_session' &&
+      row.event_type === 'AgentSessionEventRecorded' &&
+      JSON.parse(
+        fixture.db.prepare('SELECT payload_json FROM execution_events WHERE position = ?').get(row.position).payload_json,
+      ).session_event_json.includes('tool.execution.started'),
+  );
   const dispatchStart = rows.find((row) => row.aggregate_type === 'execution' && row.event_type === 'ExecutionStarted');
   assert.ok(toolIntent.position < dispatchStart.position, 'session tool intent is durable before governed dispatch');
 });
@@ -358,9 +368,7 @@ test('tool-result pressure prunes bodies with lineage before a byte-exact contin
   assert.doesNotMatch(canonicalJson(turn.model_steps[1].request), /external result body/);
   const events = fixture.sessionStore.readSession('session:loop');
   const compactionIndex = events.findIndex((event) => event.event_type === 'compaction.completed');
-  const continuationIndex = events.findIndex(
-    (event, index) => index > compactionIndex && event.event_type === 'model.request.started',
-  );
+  const continuationIndex = events.findIndex((event, index) => index > compactionIndex && event.event_type === 'model.request.started');
   assert.ok(compactionIndex > 0 && continuationIndex > compactionIndex);
   assert.deepEqual(turn.model_steps[1].source_event_ids, [turn.model_steps[0].terminal_event_id, events[compactionIndex].event_id]);
   assert.equal(events[compactionIndex].payload.source_event_ids[0], turn.tool_executions['call:echo-1'].completed_event_id);
@@ -371,7 +379,13 @@ test('a second runtime resumes after durable tool completion without redispatch'
   const fixture = setup({ routes: modelRoutes({ calls }) });
   context.after(() => fixture.db.close());
   await fixture.runtime.create(createCommand(fixture.sessionSpec));
-  const turn = append(fixture.sessionStore, 'session:loop', 'turn.started', { turn_id: 'turn:loop-1', input: sendCommand().message }, 'manual-turn');
+  const turn = append(
+    fixture.sessionStore,
+    'session:loop',
+    'turn.started',
+    { turn_id: 'turn:loop-1', input: sendCommand().message },
+    'manual-turn',
+  );
   const assembler = new ContextAssembler({ session_store: fixture.sessionStore, model_provider_snapshot: fixture.snapshot });
   const assembled = assembler.assembleAndRecord({
     schema_version: 1,
@@ -430,12 +444,32 @@ test('a second runtime resumes after durable tool completion without redispatch'
     fixture.sessionStore,
     'session:loop',
     'tool.execution.started',
-    { turn_id: 'turn:loop-1', step_id: stepId, invocation_id: invocation.invocation_id, tool_call_id: 'call:echo-1', name: 'fixture.echo', input: invocation.input, idempotency_key: invocation.idempotency_key },
+    {
+      turn_id: 'turn:loop-1',
+      step_id: stepId,
+      invocation_id: invocation.invocation_id,
+      tool_call_id: 'call:echo-1',
+      name: 'fixture.echo',
+      input: invocation.input,
+      idempotency_key: invocation.idempotency_key,
+    },
     'manual-tool-start',
   );
   const outcome = await fixture.tools.execute(invocation);
-  append(fixture.sessionStore, 'session:loop', 'tool.execution.completed', { turn_id: 'turn:loop-1', step_id: stepId, outcome }, 'manual-tool-complete');
-  append(fixture.sessionStore, 'session:loop', 'tool.operation_linked', { turn_id: 'turn:loop-1', tool_call_id: 'call:echo-1', operation_id: outcome.operation_id }, 'manual-link');
+  append(
+    fixture.sessionStore,
+    'session:loop',
+    'tool.execution.completed',
+    { turn_id: 'turn:loop-1', step_id: stepId, outcome },
+    'manual-tool-complete',
+  );
+  append(
+    fixture.sessionStore,
+    'session:loop',
+    'tool.operation_linked',
+    { turn_id: 'turn:loop-1', tool_call_id: 'call:echo-1', operation_id: outcome.operation_id },
+    'manual-link',
+  );
   assert.equal(fixture.external.dispatches, 1);
   assert.equal(fixture.sessionStore.recoveryPlan('session:loop').next_action, 'continue_after_tools');
 
@@ -457,7 +491,13 @@ test('resume fails closed instead of replaying a partially observed provider str
   const fixture = setup();
   context.after(() => fixture.db.close());
   await fixture.runtime.create(createCommand(fixture.sessionSpec));
-  const turn = append(fixture.sessionStore, 'session:loop', 'turn.started', { turn_id: 'turn:loop-1', input: sendCommand().message }, 'partial-turn');
+  const turn = append(
+    fixture.sessionStore,
+    'session:loop',
+    'turn.started',
+    { turn_id: 'turn:loop-1', input: sendCommand().message },
+    'partial-turn',
+  );
   const assembler = new ContextAssembler({ session_store: fixture.sessionStore, model_provider_snapshot: fixture.snapshot });
   const assembled = assembler.assembleAndRecord({
     schema_version: 1,
@@ -472,7 +512,13 @@ test('resume fails closed instead of replaying a partially observed provider str
     tools: [toolDefinition()],
   });
   const stepId = stableId('step', 'session:loop', 'turn:loop-1', 0);
-  append(fixture.sessionStore, 'session:loop', 'model.request.started', { turn_id: 'turn:loop-1', step_id: stepId, request: assembled.request, source_event_ids: [assembled.event.event_id] }, 'partial-start');
+  append(
+    fixture.sessionStore,
+    'session:loop',
+    'model.request.started',
+    { turn_id: 'turn:loop-1', step_id: stepId, request: assembled.request, source_event_ids: [assembled.event.event_id] },
+    'partial-start',
+  );
   append(
     fixture.sessionStore,
     'session:loop',
@@ -481,7 +527,14 @@ test('resume fails closed instead of replaying a partially observed provider str
       turn_id: 'turn:loop-1',
       step_id: stepId,
       provider_id: 'model:loop-fixture',
-      event: { schema_version: 1, provider_id: 'model:loop-fixture', request_id: assembled.request.request_id, event_type: 'content.delta', sequence: 0, payload: { text: 'observed' } },
+      event: {
+        schema_version: 1,
+        provider_id: 'model:loop-fixture',
+        request_id: assembled.request.request_id,
+        event_type: 'content.delta',
+        sequence: 0,
+        payload: { text: 'observed' },
+      },
     },
     'partial-delta',
   );
@@ -498,7 +551,12 @@ test('resume fails closed instead of replaying a partially observed provider str
   );
   const before = fixture.sessionStore.replay('session:loop').current_sequence;
   assert.equal(fixture.sessionStore.recoveryPlan('session:loop').next_action, 'fail_interrupted_model');
-  const result = await fixture.runtime.resume({ schema_version: 1, command: 'resume', session_id: 'session:loop', expected_sequence: before });
+  const result = await fixture.runtime.resume({
+    schema_version: 1,
+    command: 'resume',
+    session_id: 'session:loop',
+    expected_sequence: before,
+  });
   assert.equal(result.terminal, true);
   const state = fixture.sessionStore.replay('session:loop');
   assert.equal(state.status, 'failed');
@@ -547,11 +605,10 @@ test('cancel after restart settles a durable zero-event model step before the se
   });
   assert.equal(result.terminal, true);
   const events = fixture.sessionStore.readSession('session:loop');
-  assert.deepEqual(events.slice(-3).map((event) => event.event_type), [
-    'session.cancellation.requested',
-    'model.streamed',
-    'session.cancelled',
-  ]);
+  assert.deepEqual(
+    events.slice(-3).map((event) => event.event_type),
+    ['session.cancellation.requested', 'model.streamed', 'session.cancelled'],
+  );
   assert.equal(events.at(-2).payload.event.payload.finish_reason, 'cancelled');
 });
 
@@ -683,7 +740,10 @@ test('resume terminalizes a partial legacy stream before failing the session', a
   });
   assert.equal(result.terminal, true);
   const events = fixture.sessionStore.readSession('session:loop');
-  assert.deepEqual(events.slice(-2).map((event) => event.event_type), ['model.streamed', 'session.failed']);
+  assert.deepEqual(
+    events.slice(-2).map((event) => event.event_type),
+    ['model.streamed', 'session.failed'],
+  );
   assert.equal(events.at(-2).payload.event.event_type, 'failed');
   assert.equal(events.at(-1).payload.error_code, 'protocol_error');
   assert.equal(fixture.external.dispatches, 0);
@@ -764,7 +824,11 @@ test('unknown sessions, delegated ownership, concurrent sends and stale resume f
   const fixture = setup({ routes: modelRoutes({ slow: true }) });
   context.after(() => fixture.db.close());
   await assert.rejects(() => fixture.runtime.send(sendCommand('session:missing')));
-  const delegated = { ...fixture.sessionSpec, session_id: 'session:delegated', execution: { mode: 'delegated', runtime_provider_id: 'runtime:fixture', profile: 'default' } };
+  const delegated = {
+    ...fixture.sessionSpec,
+    session_id: 'session:delegated',
+    execution: { mode: 'delegated', runtime_provider_id: 'runtime:fixture', profile: 'default' },
+  };
   await assert.rejects(() => fixture.runtime.create(createCommand(delegated)), /kernel execution ownership/);
   await fixture.runtime.create(createCommand(fixture.sessionSpec));
   const pending = fixture.runtime.send(sendCommand());
@@ -776,7 +840,12 @@ test('unknown sessions, delegated ownership, concurrent sends and stale resume f
     () => fixture.runtime.resume({ schema_version: 1, command: 'resume', session_id: 'session:loop', expected_sequence: 1 }),
     /resume sequence/,
   );
-  const result = validatePortResult('AgentRuntime', 'dispose', await fixture.runtime.dispose({ schema_version: 1, command: 'dispose', session_id: 'session:loop' }), { schema_version: 1, command: 'dispose', session_id: 'session:loop' });
+  const result = validatePortResult(
+    'AgentRuntime',
+    'dispose',
+    await fixture.runtime.dispose({ schema_version: 1, command: 'dispose', session_id: 'session:loop' }),
+    { schema_version: 1, command: 'dispose', session_id: 'session:loop' },
+  );
   assert.equal(result.terminal, true);
 });
 

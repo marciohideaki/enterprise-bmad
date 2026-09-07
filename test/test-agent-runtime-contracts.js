@@ -373,16 +373,19 @@ test('runtime resume optionally carries an identity-bound delegated spec for pro
 
   assert.throws(
     () => validatePortInput('RuntimeProvider', 'resume', { ...input, session_id: 'session:forged' }),
-    (error) => error instanceof AgentContractError && error.details.issues.some((issue) => issue.message === 'resume session identity mismatch'),
+    (error) =>
+      error instanceof AgentContractError && error.details.issues.some((issue) => issue.message === 'resume session identity mismatch'),
   );
   assert.throws(
     () => validatePortInput('RuntimeProvider', 'resume', { ...input, provider_id: 'runtime:forged' }),
-    (error) => error instanceof AgentContractError && error.details.issues.some((issue) => issue.message === 'resume provider identity mismatch'),
+    (error) =>
+      error instanceof AgentContractError && error.details.issues.some((issue) => issue.message === 'resume provider identity mismatch'),
   );
   assert.throws(
     () => validatePortInput('RuntimeProvider', 'resume', { ...input, spec: fixtures.kernelSession }),
     (error) =>
-      error instanceof AgentContractError && error.details.issues.some((issue) => issue.message === 'runtime resume requires delegated execution'),
+      error instanceof AgentContractError &&
+      error.details.issues.some((issue) => issue.message === 'runtime resume requires delegated execution'),
   );
 });
 
@@ -574,16 +577,20 @@ test('port inputs, resolved results, stream items and errors are executable cont
           subagent_provider_id: 'subagent:fixture',
           max_parallelism: 1,
           join_timeout_ms: 1000,
-          phases: [{
-            phase_id: 'phase:fixture-1',
-            mode: 'pipeline',
-            steps: [{
-              step_id: 'step:fixture-1',
-              child_spec: { ...fixtures.kernelSession, session_id: 'session:child-1', parent_session_id: 'session:fixture-1' },
-              turn_id: 'turn:child-1',
-              message: { role: 'user', content: 'execute bounded child task' },
-            }],
-          }],
+          phases: [
+            {
+              phase_id: 'phase:fixture-1',
+              mode: 'pipeline',
+              steps: [
+                {
+                  step_id: 'step:fixture-1',
+                  child_spec: { ...fixtures.kernelSession, session_id: 'session:child-1', parent_session_id: 'session:fixture-1' },
+                  turn_id: 'turn:child-1',
+                  message: { role: 'user', content: 'execute bounded child task' },
+                },
+              ],
+            },
+          ],
         },
         occurred_at: '2026-08-22T13:34:00Z',
       },

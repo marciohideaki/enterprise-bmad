@@ -69,9 +69,13 @@ function contextProfile() {
     instructions: {
       constitution: [{ source_ref: 'governance://constitution', classification: 'internal', content: 'Obey governance.' }],
       project: [{ source_ref: 'project://fixture/instructions', classification: 'internal', content: 'Complete the bounded task.' }],
-      adapter: [], agent: [], skill: [],
+      adapter: [],
+      agent: [],
+      skill: [],
     },
-    runtime_context: [], references: [], memory: [],
+    runtime_context: [],
+    references: [],
+    memory: [],
     parameters: { max_output_tokens: 32, temperature: null, stop: [] },
     overflow_policy: 'reject',
   };
@@ -93,8 +97,16 @@ function setup({ delayMs = 0, providerEvents = null } = {}) {
     event_registry: eventRegistry,
     ledger: executionLedger,
     approval_store: new ExecutionApprovalStore(db),
-    authority: { async evaluate() { return { allowed: true }; } },
-    policy: { async evaluate() { return { allowed: true, requires_approval: false, policy_version: 'fixture', warnings: [] }; } },
+    authority: {
+      async evaluate() {
+        return { allowed: true };
+      },
+    },
+    policy: {
+      async evaluate() {
+        return { allowed: true, requires_approval: false, policy_version: 'fixture', warnings: [] };
+      },
+    },
     providers: new Map(),
     projector: projection,
     clock: { now: () => new Date().toISOString() },
@@ -242,22 +254,24 @@ test('provider identity fails before effects and a pre-checkpoint crash resumes 
   fixture.sessionStore.append({
     session_id: 'session:parent',
     expected_version: 1,
-    events: [{
-      schema_version: 1,
-      event_id: 'event:crash-gap-reservation',
-      session_id: 'session:parent',
-      sequence: 2,
-      occurred_at: new Date().toISOString(),
-      event_type: 'workflow.reserved',
-      payload: {
-        workflow_id: definition.workflow_id,
-        definition_digest: definitionDigest,
-        claim_id: 'request:crashed-original',
-        claim_expires_at: '2026-01-01T00:00:00.000Z',
-        step_count: 1,
-        child_session_ids: [child.child_spec.session_id],
+    events: [
+      {
+        schema_version: 1,
+        event_id: 'event:crash-gap-reservation',
+        session_id: 'session:parent',
+        sequence: 2,
+        occurred_at: new Date().toISOString(),
+        event_type: 'workflow.reserved',
+        payload: {
+          workflow_id: definition.workflow_id,
+          definition_digest: definitionDigest,
+          claim_id: 'request:crashed-original',
+          claim_expires_at: '2026-01-01T00:00:00.000Z',
+          step_count: 1,
+          child_session_ids: [child.child_spec.session_id],
+        },
       },
-    }],
+    ],
   });
   await fixture.subagents.spawn({
     ...spawnInput(child.child_spec.session_id),
@@ -277,20 +291,28 @@ test('provider identity fails before effects and a pre-checkpoint crash resumes 
   assert.equal(fixture.sessionStore.replay('session:parent').workflow_checkpoints.length, 0);
   const drifted = structuredClone(definition);
   drifted.phases[0].steps[0].message.content = 'replace the already durable child input';
-  await assert.rejects(() => fixture.subagents.spawn({
-    ...spawnInput(child.child_spec.session_id),
-    child_spec: child.child_spec,
-    turn_id: child.turn_id,
-    message: drifted.phases[0].steps[0].message,
-  }), /identity or scope differs/);
+  await assert.rejects(
+    () =>
+      fixture.subagents.spawn({
+        ...spawnInput(child.child_spec.session_id),
+        child_spec: child.child_spec,
+        turn_id: child.turn_id,
+        message: drifted.phases[0].steps[0].message,
+      }),
+    /identity or scope differs/,
+  );
   assert.equal(fixture.sessionStore.replay('session:parent').workflow_checkpoints.length, 0);
   const competing = workflow([{ phase_id: 'phase:competing', mode: 'pipeline', steps: [step('competing')] }], {
     workflow_id: 'workflow:competing-after-crash',
   });
-  await assert.rejects(() => fixture.workflows.run({
-    ...runInput(competing),
-    request_id: 'request:competing-after-crash',
-  }), /step limit|active durable workflow/);
+  await assert.rejects(
+    () =>
+      fixture.workflows.run({
+        ...runInput(competing),
+        request_id: 'request:competing-after-crash',
+      }),
+    /step limit|active durable workflow/,
+  );
   assert.deepEqual(fixture.sessionStore.readSession('session:child-competing'), []);
   const resumeInput = { ...runInput(definition), resume_from_ref: 'session-event://event:crash-gap-reservation' };
   const resumedRun = fixture.workflows.run(resumeInput);
@@ -306,7 +328,10 @@ test('provider identity fails before effects and a pre-checkpoint crash resumes 
   const resumed = await resumedRun;
   assert.equal(resumed.status, 'completed');
   assert.equal(fixture.sessionStore.replay('session:parent').workflow_checkpoints.length, 1);
-  assert.equal(fixture.sessionStore.readSession(child.child_spec.session_id).filter((event) => event.event_type === 'turn.started').length, 1);
+  assert.equal(
+    fixture.sessionStore.readSession(child.child_spec.session_id).filter((event) => event.event_type === 'turn.started').length,
+    1,
+  );
 });
 
 test('workflow executes bounded parallel and pipeline phases with durable exact checkpoints', async (context) => {
@@ -320,10 +345,16 @@ test('workflow executes bounded parallel and pipeline phases with durable exact 
   const result = await fixture.workflows.run(runInput(definition));
   assert.equal(result.status, 'completed');
   assert.equal(result.children.length, 5);
-  assert.equal(result.children.every((child) => child.status === 'completed'), true);
+  assert.equal(
+    result.children.every((child) => child.status === 'completed'),
+    true,
+  );
   const parent = fixture.sessionStore.replay('session:parent');
   assert.deepEqual(parent.workflows['workflow:fixture-1'].phases, ['phase:parallel', 'phase:pipeline']);
-  assert.deepEqual(parent.workflow_checkpoints.map((item) => item.completed_step_ids.length), [3, 2]);
+  assert.deepEqual(
+    parent.workflow_checkpoints.map((item) => item.completed_step_ids.length),
+    [3, 2],
+  );
   const retried = await fixture.workflows.run(runInput(definition));
   assert.equal(retried.status, 'completed');
   assert.equal(fixture.sessionStore.replay('session:parent').workflow_checkpoints.length, 2);
@@ -358,12 +389,16 @@ test('workflow cancellation cascades and returns with no orphan child', async (c
   const running = fixture.workflows.run(runInput(definition));
   await assert.rejects(() => fixture.workflows.run(runInput(definition)), /already active/);
   await new Promise((resolve) => setTimeout(resolve, 30));
-  await assert.rejects(() => fixture.workflows.dispose({
-    schema_version: 1,
-    engine_id: 'workflow:forged',
-    request_id: 'request:forged-dispose',
-    reason: 'must fail before effects',
-  }), /identity mismatch/);
+  await assert.rejects(
+    () =>
+      fixture.workflows.dispose({
+        schema_version: 1,
+        engine_id: 'workflow:forged',
+        request_id: 'request:forged-dispose',
+        reason: 'must fail before effects',
+      }),
+    /identity mismatch/,
+  );
   assert.equal(fixture.sessionStore.replay('session:child-slow1').terminal_event, null);
   const cancelled = await fixture.workflows.cancel({
     schema_version: 1,
@@ -435,11 +470,12 @@ test('one parent cannot dispatch concurrent workflows across engine instances be
   });
   const firstRun = fixture.workflows.run({ ...runInput(first), request_id: 'request:concurrent-one' });
   await assert.rejects(
-    () => secondEngine.run({
-      ...runInput(second),
-      engine_id: 'workflow:fixture-second',
-      request_id: 'request:concurrent-two',
-    }),
+    () =>
+      secondEngine.run({
+        ...runInput(second),
+        engine_id: 'workflow:fixture-second',
+        request_id: 'request:concurrent-two',
+      }),
     (error) => ['WORKFLOW_PARENT_ALREADY_ACTIVE', 'WORKFLOW_STEP_LIMIT_EXCEEDED'].includes(error.code),
   );
   assert.equal((await firstRun).status, 'completed');
@@ -468,16 +504,20 @@ test('an exact reclaim cannot preempt a live workflow on the same durable author
   const firstRun = fixture.workflows.run({ ...runInput(definition), request_id: 'request:same-claim-first' });
   const liveClaim = fixture.sessionStore.replay('session:parent').workflow_reservations['workflow:same-claim'].claim_ref;
   await assert.rejects(
-    () => secondEngine.run({
-      ...runInput(definition),
-      engine_id: 'workflow:same-claim-second',
-      request_id: 'request:same-claim-second',
-      resume_from_ref: liveClaim,
-    }),
+    () =>
+      secondEngine.run({
+        ...runInput(definition),
+        engine_id: 'workflow:same-claim-second',
+        request_id: 'request:same-claim-second',
+        resume_from_ref: liveClaim,
+      }),
     (error) => ['WORKFLOW_ALREADY_ACTIVE', 'WORKFLOW_PARENT_ALREADY_ACTIVE'].includes(error.code),
   );
   assert.equal((await firstRun).status, 'completed');
-  assert.equal(fixture.sessionStore.readSession('session:child-same-claim').filter((event) => event.event_type === 'turn.started').length, 1);
+  assert.equal(
+    fixture.sessionStore.readSession('session:child-same-claim').filter((event) => event.event_type === 'turn.started').length,
+    1,
+  );
 });
 
 test('provider cancellation terminalizes the complete descendant tree', async (context) => {
@@ -486,9 +526,11 @@ test('provider cancellation terminalizes the complete descendant tree', async (c
   await createParent(fixture);
   const childId = 'session:child-tree-root';
   const grandchildId = 'session:child-tree-leaf';
-  await fixture.subagents.spawn(spawnInput(childId, {
-    child_spec: sessionSpec(childId, 'session:parent', { max_children: 1, max_workflow_steps: 1 }),
-  }));
+  await fixture.subagents.spawn(
+    spawnInput(childId, {
+      child_spec: sessionSpec(childId, 'session:parent', { max_children: 1, max_workflow_steps: 1 }),
+    }),
+  );
   const childSequence = fixture.sessionStore.replay(childId).current_sequence;
   await fixture.subagents.spawn({
     schema_version: 1,
@@ -510,7 +552,10 @@ test('provider cancellation terminalizes the complete descendant tree', async (c
     child_session_ids: [childId],
     reason: 'operator cancelled the complete child tree',
   });
-  assert.deepEqual(cancelled.children.map((child) => child.child_session_id), [childId]);
+  assert.deepEqual(
+    cancelled.children.map((child) => child.child_session_id),
+    [childId],
+  );
   assert.equal(cancelled.evidence_refs.length, 2);
   assert.equal(fixture.sessionStore.replay(childId).terminal_event.event_type, 'session.cancelled');
   assert.equal(fixture.sessionStore.replay(grandchildId).terminal_event.event_type, 'session.cancelled');
@@ -536,7 +581,10 @@ test('join deadline cancels every child and provider parallel caps reject before
     timeout_ms: 10,
   });
   assert.equal(joined.all_terminal, true);
-  assert.equal(joined.children.every((child) => child.status === 'cancelled'), true);
+  assert.equal(
+    joined.children.every((child) => child.status === 'cancelled'),
+    true,
+  );
 });
 
 test('terminal unjoined children no longer consume the live parallel cap', async (context) => {
@@ -546,7 +594,10 @@ test('terminal unjoined children no longer consume the live parallel cap', async
   const childIds = ['released1', 'released2', 'released3', 'released4'].map((id) => `session:child-${id}`);
   await Promise.all(childIds.map((childId) => fixture.subagents.spawn(spawnInput(childId))));
   await new Promise((resolve) => setTimeout(resolve, 30));
-  assert.equal(childIds.every((childId) => Boolean(fixture.sessionStore.replay(childId).terminal_event)), true);
+  assert.equal(
+    childIds.every((childId) => Boolean(fixture.sessionStore.replay(childId).terminal_event)),
+    true,
+  );
   const fifth = 'session:child-released5';
   assert.equal((await fixture.subagents.spawn(spawnInput(fifth))).accepted, true);
   await fixture.subagents.join({
@@ -583,14 +634,15 @@ test('malformed runtime result is rejected only after the child is terminalized'
   const input = spawnInput('session:child-malformed-runtime', { provider_id: 'subagent:malformed-runtime' });
   await provider.spawn(input);
   await assert.rejects(
-    () => provider.join({
-      schema_version: 1,
-      provider_id: 'subagent:malformed-runtime',
-      request_id: 'request:join-malformed-runtime',
-      parent_session_id: 'session:parent',
-      child_session_ids: ['session:child-malformed-runtime'],
-      timeout_ms: 2000,
-    }),
+    () =>
+      provider.join({
+        schema_version: 1,
+        provider_id: 'subagent:malformed-runtime',
+        request_id: 'request:join-malformed-runtime',
+        parent_session_id: 'session:parent',
+        child_session_ids: ['session:child-malformed-runtime'],
+        timeout_ms: 2000,
+      }),
     (error) => error.code === 'SUBAGENT_RUNTIME_FAILED',
   );
   assert.equal(Boolean(fixture.sessionStore.replay('session:child-malformed-runtime').terminal_event), true);

@@ -7,9 +7,16 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { test } = require('node:test');
-const { MemoryGovernanceRepository } = require('../../tools/managed-governance-control-plane/lib/infrastructure/memory/governance-repository');
+const {
+  MemoryGovernanceRepository,
+} = require('../../tools/managed-governance-control-plane/lib/infrastructure/memory/governance-repository');
 const { generatePatchBundle } = require('../../tools/managed-governance-control-plane/lib/application/generate-patch-bundle');
-const { buildUnifiedPatch, computeFileDiff, digestPatchText, writePatchBundle } = require('../../tools/managed-governance-control-plane/lib/infrastructure/git/patch-bundle-writer');
+const {
+  buildUnifiedPatch,
+  computeFileDiff,
+  digestPatchText,
+  writePatchBundle,
+} = require('../../tools/managed-governance-control-plane/lib/infrastructure/git/patch-bundle-writer');
 
 function tempDestination(label) {
   return path.join(os.tmpdir(), `hseos-patch-bundle-test-${label}-${crypto.randomBytes(6).toString('hex')}`);
@@ -192,7 +199,11 @@ test('generatePatchBundle rejects path traversal, absolute paths and duplicate p
   }
   await assert.rejects(
     generatePatchBundle(
-      { ...request, changes: [{ path: `docs/has\0nul.md`, operation: 'create', after: 'x' }], destination: tempDestination('bad-path-nul') },
+      {
+        ...request,
+        changes: [{ path: `docs/has\0nul.md`, operation: 'create', after: 'x' }],
+        destination: tempDestination('bad-path-nul'),
+      },
       { repository },
     ),
     (error) => error.code === 'MANAGED_GOVERNANCE_CONTRACT_INVALID',

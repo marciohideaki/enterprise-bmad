@@ -112,7 +112,10 @@ test('pressure is deterministic and history compaction writes one immutable exac
   const input = compactInput();
   const record = runtime.compact(input, ['event:history-4']);
   assert.equal(record.source_digest, digest(input.sources));
-  assert.deepEqual(record.source_event_ids, input.sources.map((entry) => entry.source_event_id));
+  assert.deepEqual(
+    record.source_event_ids,
+    input.sources.map((entry) => entry.source_event_id),
+  );
   assert.deepEqual(record.retained_source_event_ids, ['event:history-4']);
   assert.ok(record.after.bytes < record.before.bytes);
   const stored = checkpoint.get({
@@ -344,24 +347,26 @@ test('checkpoint ids are immutable and dispose never erases evidence', () => {
 test('checkpoint payloads reject nested credential-bearing fields', () => {
   const checkpoint = new InMemoryCheckpointProvider({ provider_id: 'checkpoint:fixture' });
   assert.throws(
-    () => checkpoint.put({
-      schema_version: 1,
-      provider_id: 'checkpoint:fixture',
-      checkpoint_id: 'checkpoint:secret',
-      session_id: 'session:fixture-1',
-      payload: { nested: { api_key: 'plaintext-secret' } },
-    }),
+    () =>
+      checkpoint.put({
+        schema_version: 1,
+        provider_id: 'checkpoint:fixture',
+        checkpoint_id: 'checkpoint:secret',
+        session_id: 'session:fixture-1',
+        payload: { nested: { api_key: 'plaintext-secret' } },
+      }),
     (error) =>
       error.code === 'AGENT_CONTRACT_SCHEMA_INVALID' &&
       error.details.issues.some((issue) => issue.message.includes('credential-bearing checkpoint field is forbidden')),
   );
   assert.throws(
-    () => checkpoint.get({
-      schema_version: 1,
-      provider_id: 'checkpoint:fixture',
-      checkpoint_id: 'checkpoint:secret',
-      session_id: 'session:fixture-1',
-    }),
+    () =>
+      checkpoint.get({
+        schema_version: 1,
+        provider_id: 'checkpoint:fixture',
+        checkpoint_id: 'checkpoint:secret',
+        session_id: 'session:fixture-1',
+      }),
     (error) => error.code === 'CHECKPOINT_NOT_FOUND',
   );
 });

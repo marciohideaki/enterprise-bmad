@@ -186,9 +186,7 @@ test('a successful side-by-side rebuild switches generations only at full high-w
     const rebuilt = projections.rebuild({ batch_size: 1 });
     assert.equal(rebuilt.generation, 2);
     assert.equal(projections.listRuns()[0].status, 'succeeded');
-    const statuses = db
-      .prepare(`SELECT generation, status FROM execution_projection_generations ORDER BY generation`)
-      .all();
+    const statuses = db.prepare(`SELECT generation, status FROM execution_projection_generations ORDER BY generation`).all();
     assert.deepEqual(statuses, [
       { generation: 1, status: 'retired' },
       { generation: 2, status: 'active' },
@@ -273,13 +271,10 @@ test('an ineligible candidate cannot retire the active generation', () => {
       () => projections._activate.immediate(candidate),
       (error) => error.code === 'EXECUTION_PROJECTION_NOT_ACTIVATABLE',
     );
-    assert.deepEqual(
-      db.prepare(`SELECT generation, status FROM execution_projection_generations ORDER BY generation`).all(),
-      [
-        { generation: 1, status: 'active' },
-        { generation: 2, status: 'failed' },
-      ],
-    );
+    assert.deepEqual(db.prepare(`SELECT generation, status FROM execution_projection_generations ORDER BY generation`).all(), [
+      { generation: 1, status: 'active' },
+      { generation: 2, status: 'failed' },
+    ]);
     assert.equal(projections.health().healthy, true);
   } finally {
     db.close();
@@ -300,16 +295,15 @@ test('a stale worker batch cannot regress an advanced checkpoint', () => {
       (error) => error.code === 'EXECUTION_PROJECTION_CHECKPOINT_CONFLICT',
     );
     assert.equal(
-      db.prepare(
-        `SELECT last_position FROM execution_projection_checkpoints
+      db
+        .prepare(
+          `SELECT last_position FROM execution_projection_checkpoints
          WHERE projection_name = 'execution-runs' AND generation = ?`,
-      ).get(generation).last_position,
+        )
+        .get(generation).last_position,
       2,
     );
-    assert.equal(
-      db.prepare(`SELECT COUNT(*) AS count FROM execution_run_projection WHERE generation = ?`).get(generation).count,
-      2,
-    );
+    assert.equal(db.prepare(`SELECT COUNT(*) AS count FROM execution_run_projection WHERE generation = ?`).get(generation).count, 2);
   } finally {
     db.close();
   }
@@ -374,10 +368,12 @@ test('an incompatible candidate cannot be activated', () => {
       (error) => error.code === 'EXECUTION_PROJECTION_SCHEMA_MISMATCH',
     );
     assert.equal(
-      db.prepare(
-        `SELECT generation FROM execution_projection_generations
+      db
+        .prepare(
+          `SELECT generation FROM execution_projection_generations
          WHERE projection_name = 'execution-runs' AND status = 'active'`,
-      ).get().generation,
+        )
+        .get().generation,
       1,
     );
   } finally {

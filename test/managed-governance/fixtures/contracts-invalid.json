@@ -30,14 +30,8 @@
   {
     "label": "duplicate rule actor",
     "schema": "GovernanceRuleSchema",
-    "path": [
-      "subject",
-      "actor_types"
-    ],
-    "value": [
-      "human",
-      "human"
-    ]
+    "path": ["subject", "actor_types"],
+    "value": ["human", "human"]
   },
   {
     "label": "credential-shaped control plane URL",
@@ -84,20 +78,13 @@
   {
     "label": "import path traverses repository",
     "schema": "ImportPlanSchema",
-    "path": [
-      "items",
-      0,
-      "source_path"
-    ],
+    "path": ["items", 0, "source_path"],
     "value": "../outside.md"
   },
   {
     "label": "import report count mismatch",
     "schema": "ImportReportSchema",
-    "path": [
-      "counts",
-      "discovered"
-    ],
+    "path": ["counts", "discovered"],
     "value": 2
   },
   {
@@ -117,21 +104,13 @@
   {
     "label": "patch bundle delete operation carries a content digest",
     "schema": "PatchPublicationBundleManifestSchema",
-    "path": [
-      "file_operations",
-      1,
-      "content_digest"
-    ],
+    "path": ["file_operations", 1, "content_digest"],
     "value": "sha256:7115779caeac3692015d856f19d93928b866c2d7fe3038c61ae453dc3075cef9"
   },
   {
     "label": "patch bundle has duplicate file paths",
     "schema": "PatchPublicationBundleManifestSchema",
-    "path": [
-      "file_operations",
-      1,
-      "path"
-    ],
+    "path": ["file_operations", 1, "path"],
     "value": ".enterprise/.specs/decisions/ADR-0035-enforcement-boundary-doctrine.md"
   },
   {
@@ -173,18 +152,13 @@
     "label": "network profile shared-network with allow-all CIDR",
     "schema": "ManagedNetworkProfileSchema",
     "patch": {
-      "allowed_clients": [
-        "0.0.0.0/0"
-      ]
+      "allowed_clients": ["0.0.0.0/0"]
     }
   },
   {
     "label": "network profile transport env reference is not uppercase",
     "schema": "ManagedNetworkProfileSchema",
-    "path": [
-      "transport",
-      "certificate_ref_env"
-    ],
+    "path": ["transport", "certificate_ref_env"],
     "value": "hseos_governance_tls_certificate"
   },
   {

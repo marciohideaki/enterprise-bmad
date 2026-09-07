@@ -15,17 +15,17 @@ const { GovernanceRepositoryError, assertGovernanceRepository, parseRepositoryId
 
 function assertValidityWindow(record, now) {
   if (!record.issued_at || !record.effective_at || !record.expires_at) {
-    throw new GovernanceRepositoryError(
-      'published release is missing a recorded validity window',
-      'MANAGED_GOVERNANCE_SNAPSHOT_INVALID',
-    );
+    throw new GovernanceRepositoryError('published release is missing a recorded validity window', 'MANAGED_GOVERNANCE_SNAPSHOT_INVALID');
   }
   const nowMs = now.getTime();
   if (nowMs < Date.parse(record.effective_at)) {
     throw new GovernanceRepositoryError('release is not yet effective', 'MANAGED_GOVERNANCE_SNAPSHOT_NOT_YET_VALID');
   }
   if (nowMs > Date.parse(record.expires_at)) {
-    throw new GovernanceRepositoryError('release has expired — replay of a stale snapshot is rejected', 'MANAGED_GOVERNANCE_SNAPSHOT_EXPIRED');
+    throw new GovernanceRepositoryError(
+      'release has expired — replay of a stale snapshot is rejected',
+      'MANAGED_GOVERNANCE_SNAPSHOT_EXPIRED',
+    );
   }
   if (record.sunset_at && nowMs > Date.parse(record.sunset_at)) {
     throw new GovernanceRepositoryError('release is past its sunset date', 'MANAGED_GOVERNANCE_SNAPSHOT_EXPIRED');

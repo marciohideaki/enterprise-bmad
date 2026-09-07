@@ -1,8 +1,18 @@
 'use strict';
 
 const { randomUUID } = require('node:crypto');
-const { RecoveryProfileSchema, RecoveryRehearsalEvidenceSchema, digestCanonical, parseContract } = require('../../../../packages/managed-governance-contracts');
-const { GovernanceRepositoryError, assertGovernanceRepository, parseRepositoryIdentifier, parseRepositoryUuid } = require('../domain/repository-port');
+const {
+  RecoveryProfileSchema,
+  RecoveryRehearsalEvidenceSchema,
+  digestCanonical,
+  parseContract,
+} = require('../../../../packages/managed-governance-contracts');
+const {
+  GovernanceRepositoryError,
+  assertGovernanceRepository,
+  parseRepositoryIdentifier,
+  parseRepositoryUuid,
+} = require('../domain/repository-port');
 
 // FR-015: this module never creates a backup and never restores the operational database. The
 // operator has already restored a backup onto a disposable target before calling this function;
@@ -38,7 +48,9 @@ function assertDisposableTargetInspector(inspector) {
   }
   const missing = REQUIRED_INSPECTOR_METHODS.filter((method) => typeof inspector[method] !== 'function');
   if (missing.length > 0) {
-    throw invalid('disposable target inspector does not implement the v1 port', 'MANAGED_GOVERNANCE_RECOVERY_INSPECTOR_PORT_INVALID', { missing });
+    throw invalid('disposable target inspector does not implement the v1 port', 'MANAGED_GOVERNANCE_RECOVERY_INSPECTOR_PORT_INVALID', {
+      missing,
+    });
   }
   return inspector;
 }
@@ -118,7 +130,11 @@ async function runRecoveryRehearsal(
   }
   isoOrThrow(rehearsedAt, 'rehearsed at');
 
-  const disposableConnectionString = requireEnvironmentValue(environment, disposableTarget.connectionStringEnv, 'disposable target connection string');
+  const disposableConnectionString = requireEnvironmentValue(
+    environment,
+    disposableTarget.connectionStringEnv,
+    'disposable target connection string',
+  );
   const disposableIdentity = connectionIdentity(disposableConnectionString);
 
   for (const operationalEnvironmentName of operationalConnectionStringEnvs) {
@@ -158,10 +174,10 @@ async function runRecoveryRehearsal(
   const releaseSignaturesVerified = expectedReleaseId
     ? Boolean(
         operationalRelease &&
-          inspection.published_release &&
-          inspection.published_release.signer_id === operationalRelease.signer_id &&
-          inspection.published_release.signature_algorithm === operationalRelease.signature_algorithm &&
-          inspection.published_release.signed_digest === operationalRelease.signed_digest,
+        inspection.published_release &&
+        inspection.published_release.signer_id === operationalRelease.signer_id &&
+        inspection.published_release.signature_algorithm === operationalRelease.signature_algorithm &&
+        inspection.published_release.signed_digest === operationalRelease.signed_digest,
       )
     : inspection.published_release === null;
   const auditHistoryAppendOnlyVerified = inspection.application_role_mutable_audit === false;
@@ -234,10 +250,10 @@ function createPostgresDisposableTargetInspector() {
               WHERE table_schema = 'hseos_governance' AND table_name = 'audit_events'
                 AND grantee = 'hseos_governance_application'`,
           ),
-          pool.query(
-            'SELECT active_batch_id FROM hseos_governance.repositories WHERE organization_id = $1 AND repository_id = $2',
-            [organizationId, repositoryId],
-          ),
+          pool.query('SELECT active_batch_id FROM hseos_governance.repositories WHERE organization_id = $1 AND repository_id = $2', [
+            organizationId,
+            repositoryId,
+          ]),
           pool.query('SELECT max(occurred_at) AS latest FROM hseos_governance.audit_events WHERE organization_id = $1', [organizationId]),
         ]);
 

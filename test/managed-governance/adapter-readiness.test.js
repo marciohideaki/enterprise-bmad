@@ -6,7 +6,9 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { test } = require('node:test');
-const { MemoryGovernanceRepository } = require('../../tools/managed-governance-control-plane/lib/infrastructure/memory/governance-repository');
+const {
+  MemoryGovernanceRepository,
+} = require('../../tools/managed-governance-control-plane/lib/infrastructure/memory/governance-repository');
 const { createManagedGovernanceServer } = require('../../tools/managed-governance-control-plane/server');
 const { createStaticAuth } = require('../../tools/managed-governance-control-plane/lib/interfaces/http/auth');
 const { getCurrentReadiness } = require('../../tools/managed-governance-control-plane/lib/application/query-readiness');
@@ -276,7 +278,9 @@ test('the portable bootstrap emits a receipt for an adapter with no native sessi
         mode: 'managed-shadow',
         repository_id: repositoryId,
         source_commit: 'a'.repeat(40),
-        artifacts: [{ source_path: '.enterprise/.specs/constitution/Enterprise-Constitution.md', content_digest: `sha256:${'c'.repeat(64)}` }],
+        artifacts: [
+          { source_path: '.enterprise/.specs/constitution/Enterprise-Constitution.md', content_digest: `sha256:${'c'.repeat(64)}` },
+        ],
       }),
     },
   });

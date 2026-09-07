@@ -528,8 +528,7 @@ const ImportReportSchema = strictObject({
 const ENV_VAR_REFERENCE_PATTERN = /^[A-Z][A-Z0-9_]*$/;
 const EnvVarReferenceSchema = boundedString(256).regex(ENV_VAR_REFERENCE_PATTERN);
 
-const IPV4_CIDR_PATTERN =
-  /^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}\/(3[0-2]|[12]?\d)$/;
+const IPV4_CIDR_PATTERN = /^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}\/(3[0-2]|[12]?\d)$/;
 const IPV6_CIDR_PATTERN = /^[0-9A-Fa-f:]+\/(12[0-8]|1[01]\d|[1-9]?\d)$/;
 const ALLOW_ALL_CIDRS = Object.freeze(['0.0.0.0/0', '::/0']);
 
@@ -620,10 +619,18 @@ const PatchPublicationBundleManifestSchema = strictObject({
     }
     seenPaths.add(op.path);
     if (op.operation === 'delete' && op.content_digest !== null) {
-      context.addIssue({ code: 'custom', path: ['file_operations', index, 'content_digest'], message: 'delete operation must not carry a content digest' });
+      context.addIssue({
+        code: 'custom',
+        path: ['file_operations', index, 'content_digest'],
+        message: 'delete operation must not carry a content digest',
+      });
     }
     if (op.operation !== 'delete' && op.content_digest === null) {
-      context.addIssue({ code: 'custom', path: ['file_operations', index, 'content_digest'], message: `${op.operation} operation requires a content digest` });
+      context.addIssue({
+        code: 'custom',
+        path: ['file_operations', index, 'content_digest'],
+        message: `${op.operation} operation requires a content digest`,
+      });
     }
   }
 });
@@ -728,7 +735,11 @@ const ManagedNetworkProfileSchema = strictObject({
     context.addIssue({ code: 'custom', message: 'shared-network profile requires an explicit listen host and port' });
   }
   if (value.allowed_clients.length === 0) {
-    context.addIssue({ code: 'custom', path: ['allowed_clients'], message: 'shared-network profile requires a non-empty client allowlist' });
+    context.addIssue({
+      code: 'custom',
+      path: ['allowed_clients'],
+      message: 'shared-network profile requires a non-empty client allowlist',
+    });
   }
   if (value.transport === null || value.authentication === null || value.rate_limits === null) {
     context.addIssue({ code: 'custom', message: 'shared-network profile requires transport, authentication and rate limits' });
@@ -770,7 +781,11 @@ const RecoveryRehearsalEvidenceSchema = strictObject({
     value.audit_history_append_only_verified,
   ];
   if (!verified.every(Boolean)) {
-    context.addIssue({ code: 'custom', path: ['within_declared_profile'], message: 'within_declared_profile requires every evidence check to pass' });
+    context.addIssue({
+      code: 'custom',
+      path: ['within_declared_profile'],
+      message: 'within_declared_profile requires every evidence check to pass',
+    });
   }
 });
 
