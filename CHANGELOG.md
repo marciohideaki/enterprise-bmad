@@ -7,21 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.4.2] — 2026-09-07
+
+### Breaking Changes
+
+- None. Existing runtime and governance contracts remain compatible. ([PR #171](https://github.com/marciohideaki/enterprise-hseos/pull/171))
+
 ### Changed
 
-- Restore portable agent filenames with explicit collision rejection and stale-output regression coverage.
-- Allocate supervised execution binaries in private temporary directories without workstation-specific installation paths; retain restrictive permissions and cleanup.
-- Keep dependency installation reproducible without tracking generated dependency metadata.
-- Preserve the recovered sequential-delivery rule and document the historical workspace reconciliation inventory.
+- Restore portable agent filenames with explicit collision rejection and stale-output regression coverage. ([PR #171](https://github.com/marciohideaki/enterprise-hseos/pull/171))
+- Allocate supervised execution binaries in private temporary directories without workstation-specific installation paths; retain restrictive permissions and cleanup. ([PR #171](https://github.com/marciohideaki/enterprise-hseos/pull/171))
+- Keep dependency installation reproducible without tracking generated dependency metadata. ([PR #171](https://github.com/marciohideaki/enterprise-hseos/pull/171))
+- Preserve the recovered sequential-delivery rule and document the historical workspace reconciliation inventory. ([PR #171](https://github.com/marciohideaki/enterprise-hseos/pull/171))
 
 ### Security
 
-- Refresh vulnerable transitive dependencies in the lockfile.
+- Refresh vulnerable transitive dependencies in the lockfile. ([PR #171](https://github.com/marciohideaki/enterprise-hseos/pull/171))
 
 ### Tests
 
-- Keep hardlink rejection fixtures on the same filesystem so the security assertion also runs on split temporary mounts.
-- Exercise PostgreSQL integration in the required runtime matrix and normalize repository formatting.
+- Keep hardlink rejection fixtures on the same filesystem so the security assertion also runs on split temporary mounts. ([PR #171](https://github.com/marciohideaki/enterprise-hseos/pull/171))
+- Exercise PostgreSQL integration in the required runtime matrix and normalize repository formatting. ([PR #171](https://github.com/marciohideaki/enterprise-hseos/pull/171))
 
 ## [3.4.1] — 2026-09-02
 
