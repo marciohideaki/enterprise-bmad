@@ -3,12 +3,20 @@
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
 const { test } = require('node:test');
-const { MemoryGovernanceRepository } = require('../../tools/managed-governance-control-plane/lib/infrastructure/memory/governance-repository');
+const {
+  MemoryGovernanceRepository,
+} = require('../../tools/managed-governance-control-plane/lib/infrastructure/memory/governance-repository');
 const { ImportCatalogService } = require('../../tools/managed-governance-control-plane/lib/application/import-catalog');
 const { classifySource } = require('../../tools/managed-governance-control-plane/lib/infrastructure/git/classifiers');
 const { planGovernanceRelease } = require('../../tools/managed-governance-control-plane/lib/application/plan-release');
-const { publishGovernanceRelease, requestExternalSignature } = require('../../tools/managed-governance-control-plane/lib/application/publish-release');
-const { connectionIdentity, runRecoveryRehearsal } = require('../../tools/managed-governance-control-plane/lib/application/rehearse-recovery');
+const {
+  publishGovernanceRelease,
+  requestExternalSignature,
+} = require('../../tools/managed-governance-control-plane/lib/application/publish-release');
+const {
+  connectionIdentity,
+  runRecoveryRehearsal,
+} = require('../../tools/managed-governance-control-plane/lib/application/rehearse-recovery');
 
 const ACTOR = { type: 'automation', id: 'recovery-rehearsal-test' };
 const DISPOSABLE_ENV = 'HSEOS_TEST_DISPOSABLE_TARGET_URL';
@@ -90,9 +98,16 @@ async function publishTestRelease(seed) {
     key_id: 'test-key-2026',
     public_key_ref_env: 'HSEOS_RECOVERY_TEST_SIGNER_PUBLIC_KEY',
   };
-  const signer = { async sign(digest) { return { value: Buffer.from(`fake-signature-${digest}`).toString('base64url') }; } };
+  const signer = {
+    async sign(digest) {
+      return { value: Buffer.from(`fake-signature-${digest}`).toString('base64url') };
+    },
+  };
   const evidence = await requestExternalSignature(manifest, signer, binding);
-  return publishGovernanceRelease({ organizationId: seed.organizationId, actor: ACTOR, manifest, evidence, binding }, { repository: seed.repository });
+  return publishGovernanceRelease(
+    { organizationId: seed.organizationId, actor: ACTOR, manifest, evidence, binding },
+    { repository: seed.repository },
+  );
 }
 
 function fakeInspector(result) {
@@ -249,14 +264,21 @@ test('measured_rpo_seconds reflects the gap between the operational and disposab
   );
   const expected = Math.max(0, (Date.parse(operationalLatest) - Date.parse('2026-09-04T23:00:00.000Z')) / 1000);
   assert.equal(evidence.measured_rpo_seconds, expected);
-  assert.ok(expected > 0, 'the operational fixture must have audit history newer than the disposable snapshot for this test to mean anything');
+  assert.ok(
+    expected > 0,
+    'the operational fixture must have audit history newer than the disposable snapshot for this test to mean anything',
+  );
 });
 
 test('a disposable target with no restored audit history fails closed instead of reporting a fabricated measurement', async () => {
   const seed = await seededOrganization();
   const inspector = fakeInspector(passingInspection(seed, { latest_audit_event_at: null }));
   await assert.rejects(
-    runRecoveryRehearsal(baseInput(seed), { repository: seed.repository, disposableTargetInspector: inspector, environment: baseEnvironment() }),
+    runRecoveryRehearsal(baseInput(seed), {
+      repository: seed.repository,
+      disposableTargetInspector: inspector,
+      environment: baseEnvironment(),
+    }),
     (error) => error.code === 'MANAGED_GOVERNANCE_RECOVERY_TARGET_EMPTY',
   );
 });
@@ -304,7 +326,12 @@ test('release signature verification compares the disposable target against the 
 
   const corruptedInspector = fakeInspector(
     passingInspection(seed, {
-      published_release: { release_id: published.release_id, signer_id: published.signer_id, signature_algorithm: published.signature_algorithm, signed_digest: `sha256:${'0'.repeat(64)}` },
+      published_release: {
+        release_id: published.release_id,
+        signer_id: published.signer_id,
+        signature_algorithm: published.signature_algorithm,
+        signed_digest: `sha256:${'0'.repeat(64)}`,
+      },
     }),
   );
   const corrupted = await runRecoveryRehearsal(baseInput(seed, { expectedReleaseId: published.release_id }), {
@@ -328,7 +355,12 @@ test('an unexpected published release on the disposable target when none was exp
   const seed = await seededOrganization();
   const inspector = fakeInspector(
     passingInspection(seed, {
-      published_release: { release_id: 'unexpected-release', signer_id: 'x', signature_algorithm: 'ed25519', signed_digest: `sha256:${'1'.repeat(64)}` },
+      published_release: {
+        release_id: 'unexpected-release',
+        signer_id: 'x',
+        signature_algorithm: 'ed25519',
+        signed_digest: `sha256:${'1'.repeat(64)}`,
+      },
     }),
   );
   const evidence = await runRecoveryRehearsal(baseInput(seed, { expectedReleaseId: null }), {
@@ -343,7 +375,11 @@ test('measured values exceeding the declared profile block within_declared_profi
   const seed = await seededOrganization();
   const inspector = fakeInspector(passingInspection(seed));
   const evidence = await runRecoveryRehearsal(
-    baseInput(seed, { profile: recoveryProfile({ rto_seconds: 60 }), restoreStartedAt: '2026-09-05T00:00:00.000Z', restoreCompletedAt: '2026-09-05T00:10:00.000Z' }),
+    baseInput(seed, {
+      profile: recoveryProfile({ rto_seconds: 60 }),
+      restoreStartedAt: '2026-09-05T00:00:00.000Z',
+      restoreCompletedAt: '2026-09-05T00:10:00.000Z',
+    }),
     { repository: seed.repository, disposableTargetInspector: inspector, environment: baseEnvironment() },
   );
   assert.equal(evidence.measured_rto_seconds, 600);
@@ -355,11 +391,14 @@ test('restore completed at cannot precede restore started at', async () => {
   const seed = await seededOrganization();
   const inspector = fakeInspector(passingInspection(seed));
   await assert.rejects(
-    runRecoveryRehearsal(baseInput(seed, { restoreStartedAt: '2026-09-05T00:10:00.000Z', restoreCompletedAt: '2026-09-05T00:00:00.000Z' }), {
-      repository: seed.repository,
-      disposableTargetInspector: inspector,
-      environment: baseEnvironment(),
-    }),
+    runRecoveryRehearsal(
+      baseInput(seed, { restoreStartedAt: '2026-09-05T00:10:00.000Z', restoreCompletedAt: '2026-09-05T00:00:00.000Z' }),
+      {
+        repository: seed.repository,
+        disposableTargetInspector: inspector,
+        environment: baseEnvironment(),
+      },
+    ),
     (error) => error.code === 'MANAGED_GOVERNANCE_RECOVERY_INPUT_INVALID',
   );
 });
@@ -367,7 +406,15 @@ test('restore completed at cannot precede restore started at', async () => {
 test('each rehearsal is a fresh, independently recorded event -- rerunning is not idempotent-deduplicated', async () => {
   const seed = await seededOrganization();
   const inspector = fakeInspector(passingInspection(seed));
-  const first = await runRecoveryRehearsal(baseInput(seed), { repository: seed.repository, disposableTargetInspector: inspector, environment: baseEnvironment() });
-  const second = await runRecoveryRehearsal(baseInput(seed), { repository: seed.repository, disposableTargetInspector: inspector, environment: baseEnvironment() });
+  const first = await runRecoveryRehearsal(baseInput(seed), {
+    repository: seed.repository,
+    disposableTargetInspector: inspector,
+    environment: baseEnvironment(),
+  });
+  const second = await runRecoveryRehearsal(baseInput(seed), {
+    repository: seed.repository,
+    disposableTargetInspector: inspector,
+    environment: baseEnvironment(),
+  });
   assert.notEqual(first.recovery_rehearsal_id, second.recovery_rehearsal_id);
 });

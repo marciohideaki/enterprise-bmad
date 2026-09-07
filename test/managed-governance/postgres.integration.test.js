@@ -212,7 +212,11 @@ test(
           };
           const recordedReceipt = await repository.recordShadowReceipt({ organization_id: organizationId, actor, receipt });
           assert.equal(recordedReceipt.status, 'equivalent');
-          assert.equal(await repository.getShadowReceipt(otherOrganizationId, receipt.receipt_id), null, 'cross-tenant RLS must hide the row');
+          assert.equal(
+            await repository.getShadowReceipt(otherOrganizationId, receipt.receipt_id),
+            null,
+            'cross-tenant RLS must hide the row',
+          );
 
           const bundle = {
             schema_version: 1,

@@ -119,10 +119,7 @@ test('public delegated Codex CLI rejects resume and cancel as unavailable capabi
       cliFailure('resume', '--profile', PROFILE, '--state', fixture.directory, '--message', 'continue'),
       /profile supports only agent run/,
     );
-    assert.match(
-      cliFailure('cancel', '--profile', PROFILE, '--state', fixture.directory),
-      /profile supports only agent run/,
-    );
+    assert.match(cliFailure('cancel', '--profile', PROFILE, '--state', fixture.directory), /profile supports only agent run/);
     assert.equal(fs.existsSync(fixture.remote), false);
   } finally {
     fixture.cleanup();

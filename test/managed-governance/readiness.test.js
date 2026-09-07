@@ -3,9 +3,17 @@
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
 const test = require('node:test');
-const { MemoryGovernanceRepository } = require('../../tools/managed-governance-control-plane/lib/infrastructure/memory/governance-repository');
-const { deterministicReceiptId, recordShadowReceipt } = require('../../tools/managed-governance-control-plane/lib/application/record-shadow-receipt');
-const { evaluateShadowReadiness, percentile95 } = require('../../tools/managed-governance-control-plane/lib/application/evaluate-readiness');
+const {
+  MemoryGovernanceRepository,
+} = require('../../tools/managed-governance-control-plane/lib/infrastructure/memory/governance-repository');
+const {
+  deterministicReceiptId,
+  recordShadowReceipt,
+} = require('../../tools/managed-governance-control-plane/lib/application/record-shadow-receipt');
+const {
+  evaluateShadowReadiness,
+  percentile95,
+} = require('../../tools/managed-governance-control-plane/lib/application/evaluate-readiness');
 const { digestCanonical } = require('../../packages/managed-governance-contracts');
 
 const WINDOW_START = '2026-08-01T00:00:00.000Z';
@@ -234,7 +242,13 @@ test('adapters missing evidence block readiness independent of repository covera
   const repositoryId = crypto.randomUUID();
   const coveredAdapter = 'claude-code';
   const missingAdapter = 'codex';
-  const receipts = await recordDailyReceipts({ repository, organizationId, repositoryId, adapter: coveredAdapter, statusForDay: 'equivalent' });
+  const receipts = await recordDailyReceipts({
+    repository,
+    organizationId,
+    repositoryId,
+    adapter: coveredAdapter,
+    statusForDay: 'equivalent',
+  });
 
   const report = await evaluateShadowReadiness(
     readinessInput({

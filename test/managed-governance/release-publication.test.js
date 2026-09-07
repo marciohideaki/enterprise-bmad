@@ -3,11 +3,16 @@
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
 const { test } = require('node:test');
-const { MemoryGovernanceRepository } = require('../../tools/managed-governance-control-plane/lib/infrastructure/memory/governance-repository');
+const {
+  MemoryGovernanceRepository,
+} = require('../../tools/managed-governance-control-plane/lib/infrastructure/memory/governance-repository');
 const { ImportCatalogService } = require('../../tools/managed-governance-control-plane/lib/application/import-catalog');
 const { classifySource } = require('../../tools/managed-governance-control-plane/lib/infrastructure/git/classifiers');
 const { planGovernanceRelease } = require('../../tools/managed-governance-control-plane/lib/application/plan-release');
-const { publishGovernanceRelease, requestExternalSignature } = require('../../tools/managed-governance-control-plane/lib/application/publish-release');
+const {
+  publishGovernanceRelease,
+  requestExternalSignature,
+} = require('../../tools/managed-governance-control-plane/lib/application/publish-release');
 const { ExternalSignerError } = require('../../tools/managed-governance-control-plane/lib/domain/external-signer-port');
 
 function contentDigest(content) {
@@ -171,7 +176,11 @@ test('requestExternalSignature rejects a signer that does not implement sign()',
 test('requestExternalSignature rejects a malformed signer response', async () => {
   const seed = await seededRelease();
   const manifest = await planGovernanceRelease(planInput(seed), { repository: seed.repository });
-  const signer = { async sign() { return { value: 42 }; } };
+  const signer = {
+    async sign() {
+      return { value: 42 };
+    },
+  };
   await assert.rejects(
     requestExternalSignature(manifest, signer, binding()),
     (error) => error.code === 'MANAGED_GOVERNANCE_EXTERNAL_SIGNER_INVALID_RESPONSE',
@@ -212,7 +221,11 @@ test('publishGovernanceRelease persists nothing when the signature does not veri
   const releaseEvents = (await seed.repository.listAuditEvents(seed.organizationId)).filter(
     (event) => event.event_type === 'governance.release_publication_attempt.recorded',
   );
-  assert.deepEqual(releaseEvents, [], 'no release_publication_attempt row or audit event may exist for a signature that failed verification');
+  assert.deepEqual(
+    releaseEvents,
+    [],
+    'no release_publication_attempt row or audit event may exist for a signature that failed verification',
+  );
 });
 
 test('publishGovernanceRelease rejects evidence signed for a different binding', async () => {
@@ -250,7 +263,13 @@ test('publishing the same manifest and evidence twice is idempotent, and a diffe
   const otherEvidence = await requestExternalSignature(otherManifest, fakeSigner(), usedBinding);
   await assert.rejects(
     publishGovernanceRelease(
-      { organizationId: seed.organizationId, actor: seed.actor, manifest: { ...otherManifest, manifest_digest: manifest.manifest_digest }, evidence: otherEvidence, binding: usedBinding },
+      {
+        organizationId: seed.organizationId,
+        actor: seed.actor,
+        manifest: { ...otherManifest, manifest_digest: manifest.manifest_digest },
+        evidence: otherEvidence,
+        binding: usedBinding,
+      },
       { repository: seed.repository },
     ),
     (error) => error.code === 'MANAGED_GOVERNANCE_EXTERNAL_SIGNER_MISMATCH' || error.code === 'MANAGED_GOVERNANCE_REPOSITORY_INPUT_INVALID',

@@ -59,10 +59,7 @@ function prepareSignatureRequest(manifest, binding) {
 
 function buildSignatureEvidence({ binding, digest, rawSignature, clock }) {
   if (!rawSignature || typeof rawSignature !== 'object' || typeof rawSignature.value !== 'string') {
-    throw new ExternalSignerError(
-      'external signer returned an invalid response',
-      'MANAGED_GOVERNANCE_EXTERNAL_SIGNER_INVALID_RESPONSE',
-    );
+    throw new ExternalSignerError('external signer returned an invalid response', 'MANAGED_GOVERNANCE_EXTERNAL_SIGNER_INVALID_RESPONSE');
   }
   // No algorithm downgrade: the signer cannot silently return a different algorithm than the
   // one requested in the binding — the evidence's algorithm always echoes the binding's, never

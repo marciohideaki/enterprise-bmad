@@ -43,7 +43,11 @@ function validatePayload(value) {
   allowedObject(value.options, optionShapes[value.operation].allowed, optionShapes[value.operation].required, 'worker options');
   if (value.transport !== null) {
     exactObject(value.transport, ['kind', 'socket_path'], 'worker transport');
-    if (value.transport.kind !== 'unix-socket' || typeof value.transport.socket_path !== 'string' || !value.transport.socket_path.startsWith('/')) {
+    if (
+      value.transport.kind !== 'unix-socket' ||
+      typeof value.transport.socket_path !== 'string' ||
+      !value.transport.socket_path.startsWith('/')
+    ) {
       throw new BoundKernelWorkerError('worker transport must be an absolute Unix socket');
     }
   }

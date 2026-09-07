@@ -27,7 +27,8 @@ function digest(buffer) {
 function safeFile(directory, relative) {
   const filename = path.join(directory, relative);
   const stat = fs.lstatSync(filename);
-  if (!stat.isFile() || stat.isSymbolicLink() || stat.nlink !== 1) throw new BoundKernelStateSnapshotError('snapshot source contains an unsafe file');
+  if (!stat.isFile() || stat.isSymbolicLink() || stat.nlink !== 1)
+    throw new BoundKernelStateSnapshotError('snapshot source contains an unsafe file');
   return fs.readFileSync(filename);
 }
 
@@ -142,7 +143,9 @@ function promoteStateSnapshot(snapshot, target, validate = () => {}) {
   } catch (error) {
     if (fs.existsSync(backup) && !fs.existsSync(target)) fs.renameSync(backup, target);
     if (fs.existsSync(replacement)) fs.rmSync(replacement, { recursive: true, force: true });
-    throw new BoundKernelStateSnapshotError('state snapshot promotion failed', 'BOUND_KERNEL_STATE_SNAPSHOT_PROMOTION_FAILED', { cause: error });
+    throw new BoundKernelStateSnapshotError('state snapshot promotion failed', 'BOUND_KERNEL_STATE_SNAPSHOT_PROMOTION_FAILED', {
+      cause: error,
+    });
   }
 }
 

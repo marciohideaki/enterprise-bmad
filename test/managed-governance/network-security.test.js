@@ -8,7 +8,10 @@ const { ROUTES } = require('../../tools/managed-governance-control-plane/lib/int
 const { createManagedGovernanceServer } = require('../../tools/managed-governance-control-plane/server');
 const { createNetworkAuthentication } = require('../../tools/managed-governance-control-plane/lib/network/authentication');
 const { createRateLimiter } = require('../../tools/managed-governance-control-plane/lib/network/rate-limit');
-const { AmbiguousForwardingChainError, resolveClientAddress } = require('../../tools/managed-governance-control-plane/lib/network/trusted-proxy');
+const {
+  AmbiguousForwardingChainError,
+  resolveClientAddress,
+} = require('../../tools/managed-governance-control-plane/lib/network/trusted-proxy');
 
 const QUERY_TOKEN = `query-token-${'q'.repeat(24)}`;
 const ADMIN_TOKEN = `admin-token-${'a'.repeat(24)}`;
@@ -16,7 +19,10 @@ const ACTOR_HEADERS = { 'x-hseos-actor-type': 'automation', 'x-hseos-actor-id': 
 
 function routeServices(overrides = {}) {
   return Object.fromEntries([
-    ...[...new Set(ROUTES.map((route) => route.handler))].map((handler) => [handler, async (input, context) => ({ handler, input, actor: context.actor })]),
+    ...[...new Set(ROUTES.map((route) => route.handler))].map((handler) => [
+      handler,
+      async (input, context) => ({ handler, input, actor: context.actor }),
+    ]),
     ...Object.entries(overrides),
   ]);
 }
@@ -81,7 +87,11 @@ test('an admin-scoped route accepts only the admin token, never the query token 
 test('admin mutations require a valid CSRF token; admin reads do not', async () => {
   const { server, baseUrl, networkAuthentication } = await startHardenedServer();
   try {
-    const noCsrf = await fetch(`${baseUrl}/api/v1/drafts`, { method: 'POST', headers: jsonBearer(ADMIN_TOKEN), body: JSON.stringify({ artifact_type: 'standard' }) });
+    const noCsrf = await fetch(`${baseUrl}/api/v1/drafts`, {
+      method: 'POST',
+      headers: jsonBearer(ADMIN_TOKEN),
+      body: JSON.stringify({ artifact_type: 'standard' }),
+    });
     assert.equal(noCsrf.status, 403);
     const wrongCsrf = await fetch(`${baseUrl}/api/v1/drafts`, {
       method: 'POST',
@@ -198,9 +208,9 @@ test('end to end: distinct clients behind a genuinely trusted proxy each get the
     const first = await fetch(`${baseUrl}/health`, { headers: { ...bearer(QUERY_TOKEN), 'x-forwarded-for': '203.0.113.1' } });
     assert.equal(first.status, 200);
     const second = await fetch(`${baseUrl}/health`, { headers: { ...bearer(QUERY_TOKEN), 'x-forwarded-for': '203.0.113.2' } });
-    assert.equal(second.status, 200, 'a distinct real client behind a trusted proxy must not share the first client\'s bucket');
+    assert.equal(second.status, 200, "a distinct real client behind a trusted proxy must not share the first client's bucket");
     const third = await fetch(`${baseUrl}/health`, { headers: { ...bearer(QUERY_TOKEN), 'x-forwarded-for': '203.0.113.1' } });
-    assert.equal(third.status, 429, 'the first client\'s own second request must still hit its own limit');
+    assert.equal(third.status, 429, "the first client's own second request must still hit its own limit");
   } finally {
     await server.close();
   }
@@ -209,7 +219,9 @@ test('end to end: distinct clients behind a genuinely trusted proxy each get the
 test('end to end: a multi-hop X-Forwarded-For behind a trusted proxy is denied outright, not guessed at', async () => {
   const { server, baseUrl } = await startHardenedServer({ trustedProxyCidrs: ['127.0.0.1/32', '::1/128'] });
   try {
-    const response = await fetch(`${baseUrl}/health`, { headers: { ...bearer(QUERY_TOKEN), 'x-forwarded-for': '203.0.113.1, 198.51.100.9' } });
+    const response = await fetch(`${baseUrl}/health`, {
+      headers: { ...bearer(QUERY_TOKEN), 'x-forwarded-for': '203.0.113.1, 198.51.100.9' },
+    });
     assert.equal(response.status, 403);
   } finally {
     await server.close();
@@ -222,7 +234,11 @@ test('an unconfigured hardening pipeline (no networkAuthentication) preserves th
   try {
     const anonymousRead = await fetch(`http://127.0.0.1:${address.port}/health`);
     assert.equal(anonymousRead.status, 200);
-    const anonymousMutation = await fetch(`http://127.0.0.1:${address.port}/api/v1/drafts`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({}) });
+    const anonymousMutation = await fetch(`http://127.0.0.1:${address.port}/api/v1/drafts`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({}),
+    });
     assert.equal(anonymousMutation.status, 401);
   } finally {
     await server.close();
@@ -230,7 +246,11 @@ test('an unconfigured hardening pipeline (no networkAuthentication) preserves th
 });
 
 test('resolveClientAddress ignores a forwarded claim from an untrusted direct peer entirely', () => {
-  const resolved = resolveClientAddress({ directPeer: '198.51.100.7', forwardedForHeader: '203.0.113.5', trustedProxyCidrs: ['10.0.0.0/8'] });
+  const resolved = resolveClientAddress({
+    directPeer: '198.51.100.7',
+    forwardedForHeader: '203.0.113.5',
+    trustedProxyCidrs: ['10.0.0.0/8'],
+  });
   assert.equal(resolved.address, '198.51.100.7');
   assert.equal(resolved.trusted, false);
 });
@@ -243,11 +263,17 @@ test('resolveClientAddress trusts a single-hop forwarded claim only from a trust
 
 test('resolveClientAddress fails closed on an ambiguous multi-hop chain, even behind a trusted proxy', () => {
   assert.throws(
-    () => resolveClientAddress({ directPeer: '10.0.0.5', forwardedForHeader: '203.0.113.5, 198.51.100.9', trustedProxyCidrs: ['10.0.0.0/8'] }),
+    () =>
+      resolveClientAddress({ directPeer: '10.0.0.5', forwardedForHeader: '203.0.113.5, 198.51.100.9', trustedProxyCidrs: ['10.0.0.0/8'] }),
     AmbiguousForwardingChainError,
   );
   assert.throws(
-    () => resolveClientAddress({ directPeer: '10.0.0.5', forwardedForHeader: ['203.0.113.5', '198.51.100.9'], trustedProxyCidrs: ['10.0.0.0/8'] }),
+    () =>
+      resolveClientAddress({
+        directPeer: '10.0.0.5',
+        forwardedForHeader: ['203.0.113.5', '198.51.100.9'],
+        trustedProxyCidrs: ['10.0.0.0/8'],
+      }),
     AmbiguousForwardingChainError,
   );
 });

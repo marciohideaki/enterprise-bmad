@@ -5,13 +5,21 @@ const crypto = require('node:crypto');
 const { test } = require('node:test');
 const { createDraftManager } = require('../../tools/managed-governance-control-plane/lib/application/manage-draft');
 const { createPublicationRequester } = require('../../tools/managed-governance-control-plane/lib/application/request-publication');
-const { diffGovernanceReleases, getGovernanceRelease } = require('../../tools/managed-governance-control-plane/lib/application/query-release');
+const {
+  diffGovernanceReleases,
+  getGovernanceRelease,
+} = require('../../tools/managed-governance-control-plane/lib/application/query-release');
 const { verifyGovernanceSnapshot } = require('../../tools/managed-governance-control-plane/lib/application/verify-snapshot');
-const { publishGovernanceRelease, requestExternalSignature } = require('../../tools/managed-governance-control-plane/lib/application/publish-release');
+const {
+  publishGovernanceRelease,
+  requestExternalSignature,
+} = require('../../tools/managed-governance-control-plane/lib/application/publish-release');
 const { planGovernanceRelease } = require('../../tools/managed-governance-control-plane/lib/application/plan-release');
 const { ImportCatalogService } = require('../../tools/managed-governance-control-plane/lib/application/import-catalog');
 const { classifySource } = require('../../tools/managed-governance-control-plane/lib/infrastructure/git/classifiers');
-const { MemoryGovernanceRepository } = require('../../tools/managed-governance-control-plane/lib/infrastructure/memory/governance-repository');
+const {
+  MemoryGovernanceRepository,
+} = require('../../tools/managed-governance-control-plane/lib/infrastructure/memory/governance-repository');
 const { createDevelopmentAuth, createStaticAuth } = require('../../tools/managed-governance-control-plane/lib/interfaces/http/auth');
 const { ROUTES, mapError } = require('../../tools/managed-governance-control-plane/lib/interfaces/http/router');
 const { createManagedGovernanceServer } = require('../../tools/managed-governance-control-plane/server');
@@ -331,7 +339,15 @@ async function seedPublishedRelease({
     },
     { repository },
   );
-  const evidence = await requestExternalSignature(manifest, { async sign(digest) { return { value: Buffer.from(`fake-${digest}`).toString('base64url') }; } }, binding);
+  const evidence = await requestExternalSignature(
+    manifest,
+    {
+      async sign(digest) {
+        return { value: Buffer.from(`fake-${digest}`).toString('base64url') };
+      },
+    },
+    binding,
+  );
   return { published: await publishGovernanceRelease({ organizationId, actor, manifest, evidence, binding }, { repository }), binding };
 }
 
@@ -371,7 +387,10 @@ test('release query and snapshot verification are backed by real repository stat
   const services = {
     getRelease: (input) => getGovernanceRelease({ organizationId, releaseId: input.id }, { repository }),
     diffReleases: (input) =>
-      diffGovernanceReleases({ organizationId, baseReleaseId: input.base_release_id, targetReleaseId: input.target_release_id }, { repository }),
+      diffGovernanceReleases(
+        { organizationId, baseReleaseId: input.base_release_id, targetReleaseId: input.target_release_id },
+        { repository },
+      ),
     verifySnapshot: (input) => verifyGovernanceSnapshot({ organizationId, snapshotId: input.snapshot_id, binding }, { repository }),
   };
   const { server, baseUrl } = await startServer({ services });

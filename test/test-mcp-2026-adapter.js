@@ -144,20 +144,13 @@ test('modern discovery and tool list are stateless, deterministic, cacheable, an
 
   const first = await instance.handle(modernMessage('tools/list', {}, 2));
   const second = await instance.handle(modernMessage('tools/list', {}, 3));
-  assert.deepEqual(first.result.tools.map((tool) => tool.name), ['alpha.read', 'zeta.echo']);
-  assert.deepEqual(first.result.tools, second.result.tools);
-  assert.deepEqual(first.result.tools[1].outputSchema.required, [
-    'schema_version',
-    'ok',
-    'data',
-    'error',
-    'evidence',
-    'warnings',
-  ]);
-  assert.equal(
-    first.result.tools[1].outputSchema.properties.data.oneOf[1].properties.result.properties.echoed.type,
-    'string',
+  assert.deepEqual(
+    first.result.tools.map((tool) => tool.name),
+    ['alpha.read', 'zeta.echo'],
   );
+  assert.deepEqual(first.result.tools, second.result.tools);
+  assert.deepEqual(first.result.tools[1].outputSchema.required, ['schema_version', 'ok', 'data', 'error', 'evidence', 'warnings']);
+  assert.equal(first.result.tools[1].outputSchema.properties.data.oneOf[1].properties.result.properties.echoed.type, 'string');
   assert.equal(first.result.ttlMs, 5000);
   assert.equal(first.result.cacheScope, 'private');
   assert.match(first.result._meta[HSEOS_CATALOG_REVISION_META_KEY], /^[a-f0-9]{64}$/);
@@ -317,9 +310,7 @@ test('advertised output schema is enforced at the adapter boundary', async () =>
   const { instance } = adapter({
     execute: async () => successfulEnvelope({ echoed: 42 }),
   });
-  const response = await instance.handle(
-    modernMessage('tools/call', { name: 'zeta.echo', arguments: { value: 'hello' } }),
-  );
+  const response = await instance.handle(modernMessage('tools/call', { name: 'zeta.echo', arguments: { value: 'hello' } }));
   assert.equal(response.error.code, JSON_RPC.INTERNAL_ERROR);
   assert.match(response.error.message, /outputSchema/);
 });
@@ -357,10 +348,11 @@ test('invalid input and unsupported modern lifecycle methods fail before executi
   );
   assert.equal(missingMetaOverModernHttp.error.code, JSON_RPC.UNSUPPORTED_PROTOCOL_VERSION);
   assert.deepEqual(missingMetaOverModernHttp.error.data, { requested: null, supported: [MCP_MODERN_PROTOCOL_VERSION] });
-  for (const clientInfo of [{ name: '', version: '1' }, { name: 'client', version: '' }]) {
-    const malformedClient = await instance.handle(
-      modernMessage('tools/list', { _meta: { [CLIENT_INFO_META_KEY]: clientInfo } }),
-    );
+  for (const clientInfo of [
+    { name: '', version: '1' },
+    { name: 'client', version: '' },
+  ]) {
+    const malformedClient = await instance.handle(modernMessage('tools/list', { _meta: { [CLIENT_INFO_META_KEY]: clientInfo } }));
     assert.equal(malformedClient.error.code, JSON_RPC.INVALID_PARAMS);
   }
   const notification = await instance.handle({ jsonrpc: '2.0', method: 'tools/list', params: modernParams() });
@@ -473,10 +465,7 @@ test('legacy era is explicit, isolated, metered, deprecated, and cannot skip ini
   assert.equal(initialized.result.protocolVersion, MCP_LEGACY_PROTOCOL_VERSION);
   assert.equal(initialized.result._meta.sunset, LEGACY_SUNSET);
 
-  const listed = await instance.handle(
-    { jsonrpc: '2.0', id: 3, method: 'tools/list', params: {} },
-    { transport: 'stdio', connection },
-  );
+  const listed = await instance.handle({ jsonrpc: '2.0', id: 3, method: 'tools/list', params: {} }, { transport: 'stdio', connection });
   assert.equal(listed.result.ttlMs, undefined, 'modern cache semantics must not leak into legacy');
   assert.equal(listed.result._meta.sunset, LEGACY_SUNSET);
   assert.equal(usage.length, 2);
@@ -517,9 +506,10 @@ test('legacy usage evidence survives restart in a bounded daily aggregate', (t) 
   first.close();
   const reopened = new McpLegacyUsageStore(databasePath);
   reopened.record(event, new Date('2026-08-21T02:00:00.000Z'));
-  assert.deepEqual(reopened.snapshot().map(({ request_count: count, usage_day: day }) => ({ count, day })), [
-    { count: 2, day: '2026-08-21' },
-  ]);
+  assert.deepEqual(
+    reopened.snapshot().map(({ request_count: count, usage_day: day }) => ({ count, day })),
+    [{ count: 2, day: '2026-08-21' }],
+  );
   reopened.close();
 });
 
@@ -556,9 +546,9 @@ test('legacy activation readiness requires every hour of 30 completed zero-use d
     new Date('2026-08-21T18:00:00.000Z'),
   );
   assert.equal(
-    store.activationReadiness({ serverIds: servers, asOf: new Date('2026-08-21T23:00:00.000Z') }).legacy_use.some(
-      (usage) => usage.day === '2026-08-21' && usage.server_id === 'governance',
-    ),
+    store
+      .activationReadiness({ serverIds: servers, asOf: new Date('2026-08-21T23:00:00.000Z') })
+      .legacy_use.some((usage) => usage.day === '2026-08-21' && usage.server_id === 'governance'),
     true,
   );
   store.close();
@@ -575,7 +565,10 @@ test('one heartbeat per day cannot produce false-green legacy readiness', (t) =>
   }
   const readiness = store.activationReadiness({ serverIds: servers, asOf: new Date('2026-08-21T23:00:00.000Z') });
   assert.equal(readiness.ready, false);
-  assert.equal(readiness.gaps.every((gap) => gap.covered_hours === 1 && gap.required_hours === 24), true);
+  assert.equal(
+    readiness.gaps.every((gap) => gap.covered_hours === 1 && gap.required_hours === 24),
+    true,
+  );
   store.close();
 });
 
@@ -594,7 +587,10 @@ test('durable legacy telemetry bounds identity cardinality and expires old aggre
   }
   const rows = store.snapshot();
   assert.equal(rows.length, 8);
-  assert.equal(rows.some((row) => row.client_label === 'expired'), false);
+  assert.equal(
+    rows.some((row) => row.client_label === 'expired'),
+    false,
+  );
   assert.equal(rows.find((row) => row.client_label === '__overflow__').request_count, 93);
   store.close();
 });
@@ -709,9 +705,7 @@ test('approval-required calls use MRTR only for capable modern clients and bind 
     },
     approvalStateCodec: createMcpApprovalStateCodec({ key: '0123456789abcdef0123456789abcdef' }),
   });
-  const incapable = await instance.handle(
-    modernMessage('tools/call', { name: 'zeta.echo', arguments: { value: 'hello' } }),
-  );
+  const incapable = await instance.handle(modernMessage('tools/call', { name: 'zeta.echo', arguments: { value: 'hello' } }));
   assert.equal(incapable.error.code, JSON_RPC.MISSING_CLIENT_CAPABILITY);
   assert.deepEqual(incapable.error.data.requiredCapabilities, { elicitation: {} });
   assert.equal(incapable.error.data.hseos.code, 'approval_required');
@@ -760,7 +754,10 @@ test('approval-required calls use MRTR only for capable modern clients and bind 
   assert.equal(completed.result.structuredContent.ok, true);
   assert.equal(calls.at(-2).idempotency_key, calls.at(-1).idempotency_key, 'signed MRTR state must recover the generated key');
   assert.deepEqual(calls.at(-1).approval_context, { approval_id: 'approval-1', policy_version: 'policy-v1' });
-  assert.deepEqual(approvalEvents.map((event) => event.phase), ['begin', 'resolve']);
+  assert.deepEqual(
+    approvalEvents.map((event) => event.phase),
+    ['begin', 'resolve'],
+  );
 });
 
 function requestHttp(port, { body = '', headers = {}, method = 'POST', requestPath = '/mcp' }) {
@@ -916,7 +913,12 @@ test('HTTP missing client capability maps to protocol -32021 and status 400', as
       evidence: [],
       warnings: [],
     }),
-    approvalFlow: { async begin() { return { state: { policy_version: 'v1' }, inputRequests: {} }; }, async resolve() {} },
+    approvalFlow: {
+      async begin() {
+        return { state: { policy_version: 'v1' }, inputRequests: {} };
+      },
+      async resolve() {},
+    },
     approvalStateCodec: createMcpApprovalStateCodec({ key: '0123456789abcdef0123456789abcdef' }),
   });
   const server = createMcp2026HttpServer(instance);

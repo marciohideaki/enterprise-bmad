@@ -2,7 +2,12 @@
   "name": "@hseos/agent-compaction",
   "version": "1.0.0",
   "description": "Lineage-preserving compaction and immutable checkpoint providers for HSEOS",
-  "keywords": ["hseos", "agents", "compaction", "checkpoints"],
+  "keywords": [
+    "hseos",
+    "agents",
+    "compaction",
+    "checkpoints"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/marciohideaki/hseos.git",
@@ -13,6 +18,10 @@
   "dependencies": {
     "@hseos/agent-runtime-contracts": "^1.0.0"
   },
-  "engines": { "node": ">=20.0.0" },
-  "publishConfig": { "access": "public" }
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
 }

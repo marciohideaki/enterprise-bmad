@@ -33,7 +33,10 @@ async function it(name, fn) {
 function waitForServerPort(child, { timeoutMs = 6000 } = {}) {
   return new Promise((resolve, reject) => {
     let output = '';
-    const timeout = setTimeout(() => reject(new Error(`timeout waiting for server port${output ? `: ${output.slice(-500)}` : ''}`)), timeoutMs);
+    const timeout = setTimeout(
+      () => reject(new Error(`timeout waiting for server port${output ? `: ${output.slice(-500)}` : ''}`)),
+      timeoutMs,
+    );
     const onData = (chunk) => {
       output = `${output}${chunk}`.slice(-2000);
       const match = output.match(/listening on http:\/\/127\.0\.0\.1:(\d+)/);

@@ -273,14 +273,26 @@ test('readiness report ready flag requires every readiness-algorithm condition, 
   const notReady = clone(base);
   notReady.ready = false;
   notReady.open_drift_count = 3;
-  assert.doesNotThrow(() => contracts.parseContract(contracts.ReadinessReportSchema, notReady), 'a non-ready report may report open findings');
+  assert.doesNotThrow(
+    () => contracts.parseContract(contracts.ReadinessReportSchema, notReady),
+    'a non-ready report may report open findings',
+  );
 });
 
 test('managed network profile enforces deny-by-default admission for shared-network', () => {
   const base = clone(validFixtures.ManagedNetworkProfileSchema);
   assert.doesNotThrow(() => contracts.parseContract(contracts.ManagedNetworkProfileSchema, base));
 
-  const loopback = { ...base, profile: 'loopback', listen_host: null, port: null, allowed_clients: [], transport: null, authentication: null, rate_limits: null };
+  const loopback = {
+    ...base,
+    profile: 'loopback',
+    listen_host: null,
+    port: null,
+    allowed_clients: [],
+    transport: null,
+    authentication: null,
+    rate_limits: null,
+  };
   assert.doesNotThrow(() => contracts.parseContract(contracts.ManagedNetworkProfileSchema, loopback));
 
   for (const wildcard of ['0.0.0.0/0', '::/0']) {
@@ -297,11 +309,17 @@ test('managed network profile enforces deny-by-default admission for shared-netw
 
   const noAllowlist = clone(base);
   noAllowlist.allowed_clients = [];
-  assertContractError(() => contracts.parseContract(contracts.ManagedNetworkProfileSchema, noAllowlist), 'empty allowlist on shared-network');
+  assertContractError(
+    () => contracts.parseContract(contracts.ManagedNetworkProfileSchema, noAllowlist),
+    'empty allowlist on shared-network',
+  );
 
   const missingControls = clone(base);
   missingControls.transport = null;
-  assertContractError(() => contracts.parseContract(contracts.ManagedNetworkProfileSchema, missingControls), 'shared-network without transport');
+  assertContractError(
+    () => contracts.parseContract(contracts.ManagedNetworkProfileSchema, missingControls),
+    'shared-network without transport',
+  );
 });
 
 test('contract parser normalizes schema evaluation failures without leaking values', () => {

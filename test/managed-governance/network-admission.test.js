@@ -7,7 +7,11 @@ const os = require('node:os');
 const path = require('node:path');
 const { test } = require('node:test');
 const { buildAllowlist, ipFamily, parseCidr } = require('../../tools/managed-governance-control-plane/lib/network/ip');
-const { NetworkAdmissionError, assertNetworkProfile, createNetworkAdmission } = require('../../tools/managed-governance-control-plane/lib/network/admission');
+const {
+  NetworkAdmissionError,
+  assertNetworkProfile,
+  createNetworkAdmission,
+} = require('../../tools/managed-governance-control-plane/lib/network/admission');
 const { createManagedGovernanceServer } = require('../../tools/managed-governance-control-plane/server');
 const { loadSidecarConfiguration } = require('../../tools/managed-governance-control-plane/lib/configuration');
 const { createStaticAuth } = require('../../tools/managed-governance-control-plane/lib/interfaces/http/auth');
@@ -17,7 +21,10 @@ const ACTOR = { type: 'automation', id: 'network-admission-test', roles: ['admin
 
 function routeServices() {
   return Object.fromEntries(
-    [...new Set(ROUTES.map((route) => route.handler))].map((handler) => [handler, async (input, context) => ({ handler, input, actor: context.actor })]),
+    [...new Set(ROUTES.map((route) => route.handler))].map((handler) => [
+      handler,
+      async (input, context) => ({ handler, input, actor: context.actor }),
+    ]),
   );
 }
 
@@ -130,7 +137,11 @@ test('createManagedGovernanceServer refuses to construct at all on an invalid sh
     (error) => error.code === 'MANAGED_GOVERNANCE_NETWORK_ALLOWLIST_EMPTY',
   );
   assert.throws(
-    () => createManagedGovernanceServer({ services: routeServices(), networkProfile: sharedNetworkProfile({ allowed_clients: ['0.0.0.0/0'] }) }),
+    () =>
+      createManagedGovernanceServer({
+        services: routeServices(),
+        networkProfile: sharedNetworkProfile({ allowed_clients: ['0.0.0.0/0'] }),
+      }),
     (error) => error.code === 'MANAGED_GOVERNANCE_NETWORK_ALLOWLIST_ALLOW_ALL',
   );
 });
@@ -194,7 +205,12 @@ function writeSidecarConfig(overrides = {}) {
     },
     organization: { id: 'network-admission-test', display_name: 'Network Admission Test' },
     control_plane: { host: '127.0.0.1', port: 4319, authentication_token_env: 'HSEOS_TEST_ADMIN_TOKEN' },
-    binding: { control_plane_ref: 'network-admission-test', issuer: 'network-admission-test', trusted_key_ids: ['key-1'], max_snapshot_age_seconds: 3600 },
+    binding: {
+      control_plane_ref: 'network-admission-test',
+      issuer: 'network-admission-test',
+      trusted_key_ids: ['key-1'],
+      max_snapshot_age_seconds: 3600,
+    },
     ...overrides,
   };
   fs.writeFileSync(configPath, JSON.stringify(config), { mode: 0o600 });
@@ -256,7 +272,10 @@ test('loadSidecarConfiguration rejects an empty or wildcard allowlist and an inc
     network: sharedNetworkProfile({ allowed_clients: [] }),
   });
   try {
-    assert.throws(() => loadSidecarConfiguration(configPath, { environment: testEnvironment() }), (error) => error.code === 'MANAGED_GOVERNANCE_CONFIGURATION_INVALID');
+    assert.throws(
+      () => loadSidecarConfiguration(configPath, { environment: testEnvironment() }),
+      (error) => error.code === 'MANAGED_GOVERNANCE_CONFIGURATION_INVALID',
+    );
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
@@ -266,7 +285,10 @@ test('loadSidecarConfiguration rejects an empty or wildcard allowlist and an inc
     network: sharedNetworkProfile({ allowed_clients: ['192.168.5.0/24', '0.0.0.0/0'] }),
   });
   try {
-    assert.throws(() => loadSidecarConfiguration(configPath2, { environment: testEnvironment() }), (error) => error.code === 'MANAGED_GOVERNANCE_CONFIGURATION_INVALID');
+    assert.throws(
+      () => loadSidecarConfiguration(configPath2, { environment: testEnvironment() }),
+      (error) => error.code === 'MANAGED_GOVERNANCE_CONFIGURATION_INVALID',
+    );
   } finally {
     fs.rmSync(root2, { recursive: true, force: true });
   }
@@ -276,7 +298,10 @@ test('loadSidecarConfiguration rejects an empty or wildcard allowlist and an inc
     network: sharedNetworkProfile({ listen_host: '0.0.0.0', transport: null }),
   });
   try {
-    assert.throws(() => loadSidecarConfiguration(configPath3, { environment: testEnvironment() }), (error) => error.code === 'MANAGED_GOVERNANCE_CONFIGURATION_INVALID');
+    assert.throws(
+      () => loadSidecarConfiguration(configPath3, { environment: testEnvironment() }),
+      (error) => error.code === 'MANAGED_GOVERNANCE_CONFIGURATION_INVALID',
+    );
   } finally {
     fs.rmSync(root3, { recursive: true, force: true });
   }

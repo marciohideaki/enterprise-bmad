@@ -508,9 +508,7 @@ const cases = [
             break;
           }
           case 'legacy-projection-tombstone-without-supersedes': {
-            graph.edges = graph.edges.filter(
-              (candidate) => candidate.id !== 'edge.package.supersedes-legacy-projection-module',
-            );
+            graph.edges = graph.edges.filter((candidate) => candidate.id !== 'edge.package.supersedes-legacy-projection-module');
             break;
           }
           case 'cross-type-supersedes-wrong-package-role': {
@@ -752,8 +750,23 @@ const cases = [
         not: { required: ['forbidden'] },
       };
       const findings = jsonSchemaBreakingChanges(previous, current);
-      for (const expected of ['type was narrowed', 'required property added', 'additional properties', 'uniqueItems', 'format', 'if constraint added', 'minLength', 'pattern', 'multipleOf', 'oneOf constraint added', 'not constraint added']) {
-        assert.ok(findings.some((finding) => finding.includes(expected)), `missing compatibility finding: ${expected}`);
+      for (const expected of [
+        'type was narrowed',
+        'required property added',
+        'additional properties',
+        'uniqueItems',
+        'format',
+        'if constraint added',
+        'minLength',
+        'pattern',
+        'multipleOf',
+        'oneOf constraint added',
+        'not constraint added',
+      ]) {
+        assert.ok(
+          findings.some((finding) => finding.includes(expected)),
+          `missing compatibility finding: ${expected}`,
+        );
       }
     },
   },

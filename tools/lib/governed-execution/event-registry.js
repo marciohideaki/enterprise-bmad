@@ -18,7 +18,11 @@ function assertPlainObject(value, label) {
 function stableValue(value) {
   if (Array.isArray(value)) return value.map(stableValue);
   if (value && typeof value === 'object') {
-    return Object.fromEntries(Object.keys(value).sort().map((key) => [key, stableValue(value[key])]));
+    return Object.fromEntries(
+      Object.keys(value)
+        .sort()
+        .map((key) => [key, stableValue(value[key])]),
+    );
   }
   return value;
 }
@@ -151,9 +155,13 @@ class ExecutionEventRegistry {
       const classifications = schema.classifications || {};
       const unclassified = schema.allowed_fields.filter((field) => typeof classifications[field] !== 'string');
       if (unclassified.length > 0) {
-        throw new EventSchemaError(`Every ${eventType} v${version} field requires a data classification`, 'EXECUTION_EVENT_FIELD_UNCLASSIFIED', {
-          fields: unclassified,
-        });
+        throw new EventSchemaError(
+          `Every ${eventType} v${version} field requires a data classification`,
+          'EXECUTION_EVENT_FIELD_UNCLASSIFIED',
+          {
+            fields: unclassified,
+          },
+        );
       }
       normalizedVersions.set(version, {
         allowed_fields: [...new Set(schema.allowed_fields)],
@@ -209,11 +217,10 @@ class ExecutionEventRegistry {
     assertPlainObject(event, 'event');
     const definition = this.definition(event.event_type);
     if (!Number.isInteger(event.schema_version) || !definition.versions.has(event.schema_version)) {
-      throw new EventSchemaError(
-        `Unsupported ${event.event_type} schema v${event.schema_version}`,
-        'EXECUTION_EVENT_SCHEMA_UNSUPPORTED',
-        { event_type: event.event_type, schema_version: event.schema_version },
-      );
+      throw new EventSchemaError(`Unsupported ${event.event_type} schema v${event.schema_version}`, 'EXECUTION_EVENT_SCHEMA_UNSUPPORTED', {
+        event_type: event.event_type,
+        schema_version: event.schema_version,
+      });
     }
     let version = event.schema_version;
     let payload = canonicalClone(event.payload);
@@ -348,7 +355,16 @@ function createExecutionEventRegistry() {
         'input_digest',
         'warnings',
       ],
-      strings: ['tool', 'capability', 'reversibility', 'policy_version', 'deadline', 'cancellation_policy', 'idempotency_key', 'input_digest'],
+      strings: [
+        'tool',
+        'capability',
+        'reversibility',
+        'policy_version',
+        'deadline',
+        'cancellation_policy',
+        'idempotency_key',
+        'input_digest',
+      ],
       validate: combineValidators(
         requirePositiveIntegers(['input_schema_version', 'output_schema_version']),
         requireObjectField('resource_scope'),
@@ -412,11 +428,7 @@ function createExecutionEventRegistry() {
       event_type: item.event_type,
       current_version: 1,
       versions: {
-        1: schema(
-          item.fields,
-          item.required || item.fields,
-          combineValidators(requireStringFields(item.strings), item.validate),
-        ),
+        1: schema(item.fields, item.required || item.fields, combineValidators(requireStringFields(item.strings), item.validate)),
       },
     })),
   ).seal();

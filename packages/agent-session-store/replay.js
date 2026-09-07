@@ -132,11 +132,12 @@ function durableHistory(state, currentTurnId) {
 }
 
 function assertStartedWorkSettled(state) {
-  const incompleteModel = Object.values(state.turns).some((turn) =>
-    turn.model_steps.some((step) => !step.model_events.some((event) => ['completed', 'failed'].includes(event.event_type))) ||
-    (turn.model_steps.length === 0 &&
-      turn.model_events.length > 0 &&
-      !turn.model_events.some((event) => ['completed', 'failed'].includes(event.event_type))),
+  const incompleteModel = Object.values(state.turns).some(
+    (turn) =>
+      turn.model_steps.some((step) => !step.model_events.some((event) => ['completed', 'failed'].includes(event.event_type))) ||
+      (turn.model_steps.length === 0 &&
+        turn.model_events.length > 0 &&
+        !turn.model_events.some((event) => ['completed', 'failed'].includes(event.event_type))),
   );
   const incompleteTool = Object.values(state.tool_invocations).some((execution) => !execution.outcome);
   if (incompleteModel || incompleteTool) {
@@ -262,21 +263,13 @@ function replaySessionEvents(inputEvents) {
           );
         }
         if (canonicalJson(event.payload.request.messages.at(-1)) !== canonicalJson(turn.input)) {
-          throw new SessionReplayError(
-            'assembled request does not end with the durable turn input',
-            'AGENT_SESSION_TURN_INPUT_MISMATCH',
-          );
+          throw new SessionReplayError('assembled request does not end with the durable turn input', 'AGENT_SESSION_TURN_INPUT_MISMATCH');
         }
         if (!event.payload.source_refs.includes(`session-event://${turn.input_event_id}`)) {
-          throw new SessionReplayError(
-            'assembled request does not reference the durable turn event',
-            'AGENT_SESSION_SOURCE_MISMATCH',
-          );
+          throw new SessionReplayError('assembled request does not reference the durable turn event', 'AGENT_SESSION_SOURCE_MISMATCH');
         }
         const durable = durableHistory(state, event.payload.turn_id);
-        const visibleHistory = event.payload.request.messages
-          .slice(1, -1)
-          .filter((message) => message.role !== 'system');
+        const visibleHistory = event.payload.request.messages.slice(1, -1).filter((message) => message.role !== 'system');
         const compaction = turn.context_compaction;
         if (event.payload.budget.overflow_policy === 'compact') {
           if (
@@ -285,16 +278,17 @@ function replaySessionEvents(inputEvents) {
               event.payload.budget.checkpoint_provider_id !== compaction.checkpoint_provider_id ||
               canonicalJson(event.payload.budget.compaction_provider_manifest) !== canonicalJson(compaction.provider_manifest))
           ) {
-            throw new SessionReplayError('context compaction provenance differs from selected budget providers', 'AGENT_SESSION_COMPACTION_PROVENANCE_INVALID');
+            throw new SessionReplayError(
+              'context compaction provenance differs from selected budget providers',
+              'AGENT_SESSION_COMPACTION_PROVENANCE_INVALID',
+            );
           }
         }
         const selectedHistory = visibleHistory.length === 0 ? [] : durable.slice(-visibleHistory.length);
         const expectedCompactedHistory = compaction
           ? [
               compaction.replacement_messages[0],
-              ...durable
-                .filter((item) => compaction.retained_source_event_ids.includes(item.source_event_id))
-                .map((item) => item.message),
+              ...durable.filter((item) => compaction.retained_source_event_ids.includes(item.source_event_id)).map((item) => item.message),
             ]
           : null;
         const ordinaryInvalid =
@@ -312,10 +306,7 @@ function replaySessionEvents(inputEvents) {
             .filter((item) => compaction.source_event_ids.includes(item.source_event_id))
             .some((item) => event.payload.source_refs.includes(item.source_ref));
         if (compaction ? compactedInvalid : ordinaryInvalid) {
-          throw new SessionReplayError(
-            'model-visible history is not a durable contiguous suffix',
-            'AGENT_SESSION_HISTORY_MISMATCH',
-          );
+          throw new SessionReplayError('model-visible history is not a durable contiguous suffix', 'AGENT_SESSION_HISTORY_MISMATCH');
         }
         turn.request = event.payload.request;
         turn.source_refs = event.payload.source_refs;
@@ -362,14 +353,16 @@ function replaySessionEvents(inputEvents) {
             event.payload.request.messages.length <= previous.request.messages.length ||
             !event.payload.source_event_ids.includes(previous.terminal_event_id)
           ) {
-            throw new SessionReplayError('continuation request does not preserve its durable predecessor', 'AGENT_SESSION_REQUEST_MISMATCH');
+            throw new SessionReplayError(
+              'continuation request does not preserve its durable predecessor',
+              'AGENT_SESSION_REQUEST_MISMATCH',
+            );
           }
           const calls = assembledToolCalls(previous.model_events);
           const executions = calls.map((call) => turn.tool_executions[call.tool_call_id]);
           const toolCompaction = turn.tool_compactions.find(
             (compaction) =>
-              canonicalJson(compaction.source_event_ids) ===
-              canonicalJson(executions.map((execution) => execution?.completed_event_id)),
+              canonicalJson(compaction.source_event_ids) === canonicalJson(executions.map((execution) => execution?.completed_event_id)),
           );
           if (
             executions.some((execution) => !execution?.outcome) ||
@@ -397,7 +390,10 @@ function replaySessionEvents(inputEvents) {
             canonicalJson(event.payload.source_event_ids) !== canonicalJson(expectedSources) ||
             canonicalJson(stableRequest) !== canonicalJson(previous.request)
           ) {
-            throw new SessionReplayError('continuation request differs from durable model and tool facts', 'AGENT_SESSION_REQUEST_MISMATCH');
+            throw new SessionReplayError(
+              'continuation request differs from durable model and tool facts',
+              'AGENT_SESSION_REQUEST_MISMATCH',
+            );
           }
         }
         const step = {
@@ -444,9 +440,7 @@ function replaySessionEvents(inputEvents) {
         if (step) {
           const terminal = ['completed', 'failed'].includes(event.payload.event.event_type);
           const nextBytes =
-            step.model_stream_bytes +
-            (targetEvents.length === 0 ? 0 : 1) +
-            Buffer.byteLength(canonicalJson(event.payload.event), 'utf8');
+            step.model_stream_bytes + (targetEvents.length === 0 ? 0 : 1) + Buffer.byteLength(canonicalJson(event.payload.event), 'utf8');
           if (
             targetEvents.length >= MAX_MODEL_EVENTS_PER_STEP ||
             (!terminal && targetEvents.length >= MAX_MODEL_EVENTS_PER_STEP - 1) ||
@@ -563,16 +557,21 @@ function replaySessionEvents(inputEvents) {
           if (
             executions.some((execution) => !execution?.outcome) ||
             event.payload.retained_source_event_ids.length !== 0 ||
-            canonicalJson(event.payload.source_event_ids) !==
-              canonicalJson(executions.map((execution) => execution.completed_event_id))
+            canonicalJson(event.payload.source_event_ids) !== canonicalJson(executions.map((execution) => execution.completed_event_id))
           ) {
-            throw new SessionReplayError('tool compaction lineage differs from exact durable outcomes', 'AGENT_SESSION_COMPACTION_LINEAGE_INVALID');
+            throw new SessionReplayError(
+              'tool compaction lineage differs from exact durable outcomes',
+              'AGENT_SESSION_COMPACTION_LINEAGE_INVALID',
+            );
           }
           if (
             canonicalJson(event.payload.replacement_messages.map((message) => message.tool_call_id)) !==
             canonicalJson(calls.map((call) => call.tool_call_id))
           ) {
-            throw new SessionReplayError('tool compaction changed call identity or ordering', 'AGENT_SESSION_COMPACTION_TOOL_IDENTITY_INVALID');
+            throw new SessionReplayError(
+              'tool compaction changed call identity or ordering',
+              'AGENT_SESSION_COMPACTION_TOOL_IDENTITY_INVALID',
+            );
           }
           sources = executions.map((execution) => ({
             source_event_id: execution.completed_event_id,
@@ -589,7 +588,10 @@ function replaySessionEvents(inputEvents) {
           canonicalJson(event.payload.before) !== canonicalJson(compactionStats(sourceMessages)) ||
           canonicalJson(event.payload.after) !== canonicalJson(compactionStats(event.payload.replacement_messages))
         ) {
-          throw new SessionReplayError('compaction accounting differs from durable messages', 'AGENT_SESSION_COMPACTION_ACCOUNTING_INVALID');
+          throw new SessionReplayError(
+            'compaction accounting differs from durable messages',
+            'AGENT_SESSION_COMPACTION_ACCOUNTING_INVALID',
+          );
         }
         if (
           event.payload.before.bytes > event.payload.provider_manifest.max_input_bytes ||
@@ -603,7 +605,10 @@ function replaySessionEvents(inputEvents) {
             turn.budget.checkpoint_provider_id !== event.payload.checkpoint_provider_id ||
             canonicalJson(turn.budget.compaction_provider_manifest) !== canonicalJson(event.payload.provider_manifest))
         ) {
-          throw new SessionReplayError('tool compaction provenance differs from selected budget providers', 'AGENT_SESSION_COMPACTION_PROVENANCE_INVALID');
+          throw new SessionReplayError(
+            'tool compaction provenance differs from selected budget providers',
+            'AGENT_SESSION_COMPACTION_PROVENANCE_INVALID',
+          );
         }
         const compaction = { ...event.payload, event_id: event.event_id };
         if (event.payload.trigger === 'context_pressure') turn.context_compaction = compaction;
@@ -634,10 +639,7 @@ function replaySessionEvents(inputEvents) {
         if (existing) {
           throw new SessionReplayError('workflow reservation is already durable', 'AGENT_SESSION_WORKFLOW_RESERVATION_DUPLICATE');
         }
-        const reservedSteps = Object.values(state.workflow_reservations).reduce(
-          (count, reservation) => count + reservation.step_count,
-          0,
-        );
+        const reservedSteps = Object.values(state.workflow_reservations).reduce((count, reservation) => count + reservation.step_count, 0);
         const legacySteps = state.workflow_checkpoints
           .filter((checkpoint) => !state.workflow_reservations[checkpoint.workflow_id])
           .reduce((count, checkpoint) => count + (checkpoint.completed_step_ids?.length || 1), 0);
@@ -646,7 +648,10 @@ function replaySessionEvents(inputEvents) {
         }
         const newChildIds = event.payload.child_session_ids.filter((childId) => !state.children.includes(childId));
         if (state.children.length + newChildIds.length > state.spec.limits.max_children) {
-          throw new SessionReplayError('workflow reservation exceeds the parent child limit', 'AGENT_SESSION_WORKFLOW_CHILD_LIMIT_EXCEEDED');
+          throw new SessionReplayError(
+            'workflow reservation exceeds the parent child limit',
+            'AGENT_SESSION_WORKFLOW_CHILD_LIMIT_EXCEEDED',
+          );
         }
         const active = Object.values(state.workflow_reservations).find((reservation) => !reservation.released);
         if (active) {
@@ -706,7 +711,10 @@ function replaySessionEvents(inputEvents) {
           };
         }
         if (state.workflows[event.payload.workflow_id].definition_digest !== event.payload.definition_digest) {
-          throw new SessionReplayError('workflow identifier has a different durable definition', 'AGENT_SESSION_WORKFLOW_DEFINITION_CONFLICT');
+          throw new SessionReplayError(
+            'workflow identifier has a different durable definition',
+            'AGENT_SESSION_WORKFLOW_DEFINITION_CONFLICT',
+          );
         }
         if (state.workflows[event.payload.workflow_id].phases.includes(event.payload.phase_id)) {
           throw new SessionReplayError('workflow phase is already checkpointed', 'AGENT_SESSION_WORKFLOW_PHASE_DUPLICATE');
@@ -732,10 +740,7 @@ function replaySessionEvents(inputEvents) {
         break;
       case 'session.cancelled':
         if (!state.cancellation_request) {
-          throw new SessionReplayError(
-            'session cancellation requires a preceding durable request',
-            'AGENT_SESSION_CANCELLATION_REQUIRED',
-          );
+          throw new SessionReplayError('session cancellation requires a preceding durable request', 'AGENT_SESSION_CANCELLATION_REQUIRED');
         }
         if (state.cancellation_request.source === 'deadline') {
           throw new SessionReplayError(
@@ -743,10 +748,7 @@ function replaySessionEvents(inputEvents) {
             'AGENT_SESSION_CANCELLATION_TERMINAL_INVALID',
           );
         }
-        if (
-          event.payload.reason !== state.cancellation_request.reason ||
-          event.payload.cascade !== state.cancellation_request.cascade
-        ) {
+        if (event.payload.reason !== state.cancellation_request.reason || event.payload.cascade !== state.cancellation_request.cascade) {
           throw new SessionReplayError(
             'session cancellation terminal differs from the durable request',
             'AGENT_SESSION_CANCELLATION_MISMATCH',

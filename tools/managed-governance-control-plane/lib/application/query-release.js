@@ -42,7 +42,10 @@ async function getGovernanceRelease({ organizationId, releaseId }, context) {
   }
   const record = await repository.getPublishedRelease(parsedOrganizationId, releaseId);
   if (!record) {
-    throw new GovernanceRepositoryError('no published release with this identity exists for this organization', 'MANAGED_GOVERNANCE_NOT_FOUND');
+    throw new GovernanceRepositoryError(
+      'no published release with this identity exists for this organization',
+      'MANAGED_GOVERNANCE_NOT_FOUND',
+    );
   }
   return releaseSummary(record);
 }

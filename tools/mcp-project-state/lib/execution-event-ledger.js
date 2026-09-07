@@ -70,7 +70,11 @@ class InvalidEventError extends ExecutionLedgerError {
 function stableValue(value) {
   if (Array.isArray(value)) return value.map(stableValue);
   if (value && typeof value === 'object') {
-    return Object.fromEntries(Object.keys(value).sort().map((key) => [key, stableValue(value[key])]));
+    return Object.fromEntries(
+      Object.keys(value)
+        .sort()
+        .map((key) => [key, stableValue(value[key])]),
+    );
   }
   return value;
 }
@@ -322,8 +326,7 @@ class ExecutionEventLedger {
 
   _recordAttempt(aggregateType) {
     this._metrics.append_count++;
-    this._metrics.append_count_by_aggregate_type[aggregateType] =
-      (this._metrics.append_count_by_aggregate_type[aggregateType] || 0) + 1;
+    this._metrics.append_count_by_aggregate_type[aggregateType] = (this._metrics.append_count_by_aggregate_type[aggregateType] || 0) + 1;
   }
 
   _recordResult(aggregateType, result) {

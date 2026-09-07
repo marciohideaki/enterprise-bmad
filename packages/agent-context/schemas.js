@@ -17,7 +17,8 @@ const MAX_CONTEXT_SOURCE_BYTES = 1_048_576;
 const MAX_CONTEXT_ASSEMBLY_BYTES = 16_777_216;
 const MAX_TOOL_DEFINITIONS_BYTES = 4_194_304;
 const MAX_PARAMETER_BYTES = 262_144;
-const SENSITIVE_KEY = /(?:^|_)(?:access_token|api_key|approval_token|auth|authentication|authorization|client_secret|cookie|credential|credentials|password|private_key|refresh_token|secret|session_cookie|set_cookie|token)$/;
+const SENSITIVE_KEY =
+  /(?:^|_)(?:access_token|api_key|approval_token|auth|authentication|authorization|client_secret|cookie|credential|credentials|password|private_key|refresh_token|secret|session_cookie|set_cookie|token)$/;
 const SafeReferenceSchema = ReferenceSchema.refine((value) => !/[\s\u0000-\u001f\u007f]/u.test(value), {
   message: 'context source references cannot contain whitespace or control characters',
 });
@@ -67,13 +68,7 @@ const InstructionLayersSchema = strictObject({
 });
 
 function allSources(input) {
-  return [
-    ...Object.values(input.instructions).flat(),
-    ...input.runtime_context,
-    ...input.references,
-    ...input.memory,
-    input.current_turn,
-  ];
+  return [...Object.values(input.instructions).flat(), ...input.runtime_context, ...input.references, ...input.memory, input.current_turn];
 }
 
 function findSensitiveKey(value, path = 'tools') {

@@ -2,6 +2,7 @@
 
 const { createHash } = require('node:crypto');
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const { spawn, spawnSync } = require('node:child_process');
 
@@ -20,7 +21,6 @@ const PROFILE = 'lockdown';
 const MAX_CHILD_OUTPUT_BYTES = 1_048_576;
 const MAX_BINARY_BYTES = 67_108_864;
 const DEFAULT_TIMEOUT_MS = 120_000;
-const RUNTIME_ROOT = '/opt/hideakisolutions/.hseos-runtime';
 const SAFE_FLAGS = new Set(['--lockdown', '--no-save-config', '--exec', '--private-home', '--no-docker', '--no-display', '--no-gpu']);
 const REQUIRED_FLAGS = ['--lockdown', '--no-save-config', '--exec'];
 const REQUIRED_MASKS = ['.env', '.env.local', 'credentials.json', 'secrets.yml'];
@@ -305,8 +305,9 @@ async function runSupervisedBoundKernel(operation, options = {}, dependencies = 
   const readiness = await (dependencies.readinessCheck || sandboxDoctor)(projectDir, environment, { forceRequired: true });
   validateReadiness(readiness);
   const binary = resolveCommand(resolved.sandbox.binary || 'ai-jail', environment);
-  const runtimeRoot = RUNTIME_ROOT;
-  fs.mkdirSync(runtimeRoot, { recursive: true, mode: 0o700 });
+  // Use an atomic private directory on the host temporary filesystem. The
+  // sandbox receives only its explicit map, never a workstation-specific root.
+  const runtimeRoot = fs.realpathSync(os.tmpdir());
   const runtimeRootStat = fs.lstatSync(runtimeRoot);
   if (!runtimeRootStat.isDirectory() || runtimeRootStat.isSymbolicLink()) {
     throw new BoundKernelSupervisorError('bound kernel runtime root must be a real directory');

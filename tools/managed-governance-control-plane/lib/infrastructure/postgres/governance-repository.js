@@ -768,7 +768,14 @@ class PostgresGovernanceRepository {
       const record = freezeRows(insertResult.rows)[0];
       await client.query(
         'INSERT INTO hseos_governance.command_receipts(command_receipt_id, organization_id, idempotency_key, command_digest, result, created_at) VALUES ($1, $2, $3, $4, $5::jsonb, $6)',
-        [randomUUID(), prepared.organization_id, prepared.natural_key, prepared.command_digest, JSON.stringify(record), prepared.occurred_at],
+        [
+          randomUUID(),
+          prepared.organization_id,
+          prepared.natural_key,
+          prepared.command_digest,
+          JSON.stringify(record),
+          prepared.occurred_at,
+        ],
       );
       return record;
     });

@@ -56,10 +56,7 @@ test('legacy telemetry path has one explicit central authority', () => {
     }),
     path.normalize('/var/lib/hseos-observation/legacy.db'),
   );
-  assert.throws(
-    () => resolveLegacyTelemetryPath({ telemetryPath: '.hseos/state/legacy.db' }),
-    /must be an absolute path/,
-  );
+  assert.throws(() => resolveLegacyTelemetryPath({ telemetryPath: '.hseos/state/legacy.db' }), /must be an absolute path/);
 });
 
 test('legacy telemetry target cannot alias operational state or linked files', (t) => {
@@ -68,29 +65,17 @@ test('legacy telemetry target cannot alias operational state or linked files', (
   const statePath = path.join(directory, 'project.db');
   const telemetryPath = path.join(directory, 'telemetry.db');
   fs.writeFileSync(statePath, 'state');
-  assert.throws(
-    () => assertLegacyTelemetryTarget(statePath, { stateDatabasePath: statePath }),
-    /must be separate/,
-  );
+  assert.throws(() => assertLegacyTelemetryTarget(statePath, { stateDatabasePath: statePath }), /must be separate/);
   fs.symlinkSync(statePath, telemetryPath);
-  assert.throws(
-    () => assertLegacyTelemetryTarget(telemetryPath, { stateDatabasePath: statePath }),
-    /regular, non-linked file/,
-  );
+  assert.throws(() => assertLegacyTelemetryTarget(telemetryPath, { stateDatabasePath: statePath }), /regular, non-linked file/);
   fs.unlinkSync(telemetryPath);
   fs.linkSync(statePath, telemetryPath);
-  assert.throws(
-    () => assertLegacyTelemetryTarget(telemetryPath, { stateDatabasePath: statePath }),
-    /regular, non-linked file/,
-  );
+  assert.throws(() => assertLegacyTelemetryTarget(telemetryPath, { stateDatabasePath: statePath }), /regular, non-linked file/);
   fs.unlinkSync(telemetryPath);
   fs.unlinkSync(statePath);
   fs.symlinkSync(telemetryPath, statePath);
   fs.writeFileSync(telemetryPath, 'telemetry');
-  assert.throws(
-    () => assertLegacyTelemetryTarget(telemetryPath, { stateDatabasePath: statePath }),
-    /state database must not be a symlink/,
-  );
+  assert.throws(() => assertLegacyTelemetryTarget(telemetryPath, { stateDatabasePath: statePath }), /state database must not be a symlink/);
 });
 
 test('production entrypoint preserves metered legacy compatibility without pending schema activation', async (t) => {
@@ -125,7 +110,9 @@ test('production entrypoint preserves metered legacy compatibility without pendi
     'an inherited consumer cwd must not fragment compatibility evidence',
   );
   const usageDb = new Database(usagePath, { readonly: true });
-  assert.ok(usageDb.prepare("SELECT SUM(request_count) AS count FROM mcp_legacy_usage_daily WHERE server_id = 'governance'").get().count >= 1);
+  assert.ok(
+    usageDb.prepare("SELECT SUM(request_count) AS count FROM mcp_legacy_usage_daily WHERE server_id = 'governance'").get().count >= 1,
+  );
   usageDb.close();
 });
 
@@ -262,7 +249,10 @@ async function withServer(spec, callback) {
 function lifecycle(databasePath) {
   const db = new Database(databasePath, { readonly: true });
   try {
-    return db.prepare(`SELECT event_type FROM execution_events ORDER BY position`).all().map((row) => row.event_type);
+    return db
+      .prepare(`SELECT event_type FROM execution_events ORDER BY position`)
+      .all()
+      .map((row) => row.event_type);
   } finally {
     db.close();
   }
@@ -330,7 +320,10 @@ test('approval-required modern mutation completes through signed elicitation sta
     const db = new Database(databasePath, { readonly: true });
     assert.equal(db.prepare("SELECT value FROM state WHERE key = 'approved'").get().value, 'yes');
     assert.deepEqual(
-      db.prepare('SELECT event_type FROM execution_events ORDER BY position').all().map(({ event_type: type }) => type),
+      db
+        .prepare('SELECT event_type FROM execution_events ORDER BY position')
+        .all()
+        .map(({ event_type: type }) => type),
       ['ExecutionAuthorized', 'ExecutionStarted', 'ExecutionSucceeded'],
     );
     db.close();
@@ -376,7 +369,10 @@ test('automatic stale sweep mutates only through the governed scheduler lifecycl
     assert.equal(result.swept, 1);
     assert.equal(db.prepare("SELECT status FROM as_agent_runs WHERE run_id = 'sweep-run'").get().status, 'orphaned');
     assert.deepEqual(
-      db.prepare('SELECT event_type FROM execution_events ORDER BY position').all().map(({ event_type: type }) => type),
+      db
+        .prepare('SELECT event_type FROM execution_events ORDER BY position')
+        .all()
+        .map(({ event_type: type }) => type),
       ['ExecutionAuthorized', 'ExecutionStarted', 'ExecutionSucceeded'],
     );
   } finally {
@@ -415,7 +411,10 @@ test('operational output validation rejects lossy provider values before success
     });
     assert.equal(result.ok, false);
     assert.deepEqual(
-      db.prepare('SELECT event_type FROM execution_events ORDER BY position').all().map(({ event_type: type }) => type),
+      db
+        .prepare('SELECT event_type FROM execution_events ORDER BY position')
+        .all()
+        .map(({ event_type: type }) => type),
       ['ExecutionAuthorized', 'ExecutionStarted', 'ExecutionFailed'],
     );
   } finally {

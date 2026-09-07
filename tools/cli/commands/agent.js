@@ -3,10 +3,7 @@
 const { cancelReferenceAgent, resumeReferenceAgent, runReferenceAgent } = require('../lib/reference-agent-runtime');
 const { CANDIDATE_PROFILE } = require('../../lib/agentic-activation-rehearsal');
 const { runSupervisedBoundKernel } = require('../lib/bound-kernel-supervisor');
-const {
-  PROFILE_ID: CODEX_DELEGATED_PROFILE,
-  runDelegatedCodex,
-} = require('../lib/delegated-codex-runtime');
+const { PROFILE_ID: CODEX_DELEGATED_PROFILE, runDelegatedCodex } = require('../lib/delegated-codex-runtime');
 const {
   PROFILE_ID: CLAUDE_DELEGATED_PROFILE,
   cancelDelegatedClaude,

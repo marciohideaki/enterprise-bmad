@@ -10,11 +10,16 @@ const { digestCanonical } = require('../../packages/managed-governance-contracts
 const { createSnapshotStore } = require('../../packages/managed-governance-client');
 const { BINDING_DIGEST, REPOSITORY_ID, snapshot } = require('./client-fixtures');
 const { verifyGovernanceSnapshot } = require('../../tools/managed-governance-control-plane/lib/application/verify-snapshot');
-const { MemoryGovernanceRepository } = require('../../tools/managed-governance-control-plane/lib/infrastructure/memory/governance-repository');
+const {
+  MemoryGovernanceRepository,
+} = require('../../tools/managed-governance-control-plane/lib/infrastructure/memory/governance-repository');
 const { ImportCatalogService } = require('../../tools/managed-governance-control-plane/lib/application/import-catalog');
 const { classifySource } = require('../../tools/managed-governance-control-plane/lib/infrastructure/git/classifiers');
 const { planGovernanceRelease } = require('../../tools/managed-governance-control-plane/lib/application/plan-release');
-const { publishGovernanceRelease, requestExternalSignature } = require('../../tools/managed-governance-control-plane/lib/application/publish-release');
+const {
+  publishGovernanceRelease,
+  requestExternalSignature,
+} = require('../../tools/managed-governance-control-plane/lib/application/publish-release');
 let directory;
 let snapshotPath;
 
@@ -61,7 +66,13 @@ function contentDigest(content) {
 function discoveredSource(repositoryId) {
   const raw = '# Policy A\n';
   const normalized = raw.replaceAll(/\r\n?/g, '\n');
-  const base = { source_path: 'policies/a.md', source_kind: 'policy', raw_content: raw, normalized_content: normalized, content_digest: contentDigest(normalized) };
+  const base = {
+    source_path: 'policies/a.md',
+    source_kind: 'policy',
+    raw_content: raw,
+    normalized_content: normalized,
+    content_digest: contentDigest(normalized),
+  };
   return {
     async discover() {
       return {
@@ -118,7 +129,11 @@ async function publishedFixture({ organizationId, releaseId, issuedAt, effective
   );
   const evidence = await requestExternalSignature(
     manifest,
-    { async sign(digest) { return { value: Buffer.from(`fake-${digest}`).toString('base64url') }; } },
+    {
+      async sign(digest) {
+        return { value: Buffer.from(`fake-${digest}`).toString('base64url') };
+      },
+    },
     binding,
   );
   await publishGovernanceRelease({ organizationId, actor, manifest, evidence, binding }, { repository });

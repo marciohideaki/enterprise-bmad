@@ -38,7 +38,11 @@ const axonBin = resolveAxon();
 const { port } = parseArgs();
 const fixtureActivation = process.env.NODE_ENV === 'test' && process.env.HSEOS_GOVERNED_EXECUTION_FIXTURE === '1';
 const serverOptions = {
-  serverId: 'axon_bridge', tools, mode: 'http', port, log: console.log,
+  serverId: 'axon_bridge',
+  tools,
+  mode: 'http',
+  port,
+  log: console.log,
   async invokeTool(name, args, context) {
     const tool = tools.get(name);
     if (!tool) throw new Error(`Unknown tool: ${name}`);
@@ -48,7 +52,8 @@ const serverOptions = {
 const runtimeHandle = fixtureActivation
   ? startNativeMcpServer(serverOptions)
   : startLegacyMcpServer({
-      ...serverOptions, serverName: 'axon-bridge',
+      ...serverOptions,
+      serverName: 'axon-bridge',
       health: { axon_binary: axonBin || null, fallback_active: !axonBin, tools: tools.size },
     });
 console.log(`[axon-bridge] Axon binary: ${axonBin || '(fallback mode)'}`);

@@ -3,11 +3,7 @@
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 
-const {
-  CONTRACT_SCHEMA_VERSION,
-  negotiateRuntimeCapabilities,
-  validatePortResult,
-} = require('../packages/agent-runtime-contracts');
+const { CONTRACT_SCHEMA_VERSION, negotiateRuntimeCapabilities, validatePortResult } = require('../packages/agent-runtime-contracts');
 const {
   HOSTED_RUNTIME_ADAPTERS,
   ClaudeCodeRuntimeProvider,
@@ -34,7 +30,9 @@ class FakeHostedDriver {
     const { on_event: unused, ...serializable } = input;
     this.calls.push(['send', structuredClone(serializable)]);
     this.current = input;
-    return new Promise((resolve, reject) => { this.turn = { resolve, reject }; });
+    return new Promise((resolve, reject) => {
+      this.turn = { resolve, reject };
+    });
   }
 
   async resume(input) {
@@ -42,10 +40,18 @@ class FakeHostedDriver {
     return { effect_boundary: this.boundary };
   }
 
-  async cancel(input) { this.calls.push(['cancel', structuredClone(input)]); }
-  async dispose(input) { this.calls.push(['dispose', structuredClone(input)]); }
-  async close() { this.calls.push(['close']); }
-  emit(event) { return this.current.on_event(structuredClone(event)); }
+  async cancel(input) {
+    this.calls.push(['cancel', structuredClone(input)]);
+  }
+  async dispose(input) {
+    this.calls.push(['dispose', structuredClone(input)]);
+  }
+  async close() {
+    this.calls.push(['close']);
+  }
+  emit(event) {
+    return this.current.on_event(structuredClone(event));
+  }
 }
 
 function runtime(Adapter, providerId, driver = new FakeHostedDriver()) {
@@ -113,7 +119,9 @@ for (const [name, Adapter, providerId, transport] of [
     assert.deepEqual(manifest.secret_refs, []);
     assert.equal(negotiateRuntimeCapabilities(manifest, 'L0').ok, true);
     for (const level of ['L1', 'L2', 'L3', 'L4']) assert.equal(negotiateRuntimeCapabilities(manifest, level).ok, false);
-    assert.throws(() => { manifest.capabilities.push('governed_tools'); }, TypeError);
+    assert.throws(() => {
+      manifest.capabilities.push('governed_tools');
+    }, TypeError);
   });
 
   test(`${name} maps its injected native driver to ordered RuntimeProvider facts`, async () => {
@@ -138,18 +146,23 @@ for (const [name, Adapter, providerId, transport] of [
     driver.emit({ type: 'message.delta', text: 'bounded answer' });
     driver.turn.resolve({ stop_reason: 'completed' });
     const events = await collect(provider, providerId);
-    assert.deepEqual(events.map((event) => event.event_type), [
-      'runtime.session.started',
-      'runtime.message.delta',
-      'runtime.session.completed',
-    ]);
-    assert.deepEqual(events.map((event) => event.sequence), [1, 2, 3]);
+    assert.deepEqual(
+      events.map((event) => event.event_type),
+      ['runtime.session.started', 'runtime.message.delta', 'runtime.session.completed'],
+    );
+    assert.deepEqual(
+      events.map((event) => event.sequence),
+      [1, 2, 3],
+    );
   });
 }
 
 test('hosted adapters fail closed when attestation is missing or an effect is attempted', async () => {
   const denied = runtime(CodexRuntimeProvider, 'runtime:codex-denied', new FakeHostedDriver({ boundary: 'unrestricted' }));
-  await assert.rejects(() => denied.create(createInput('runtime:codex-denied')), (error) => error.error_code === 'policy_denied');
+  await assert.rejects(
+    () => denied.create(createInput('runtime:codex-denied')),
+    (error) => error.error_code === 'policy_denied',
+  );
 
   const driver = new FakeHostedDriver();
   const provider = runtime(ClaudeCodeRuntimeProvider, 'runtime:claude-effect', driver);
@@ -163,7 +176,10 @@ test('hosted adapters fail closed when attestation is missing or an effect is at
   const events = await collect(provider, 'runtime:claude-effect');
   assert.equal(events.at(-1).event_type, 'runtime.session.failed');
   assert.equal(events.at(-1).payload.error_code, 'policy_denied');
-  assert.equal(driver.calls.some(([method]) => method === 'cancel'), true);
+  assert.equal(
+    driver.calls.some(([method]) => method === 'cancel'),
+    true,
+  );
 });
 
 test('hosted resume requires declared support and re-attests the effect boundary', async () => {
@@ -197,7 +213,10 @@ for (const [name, Adapter, providerId] of [
     };
     const result = validatePortResult('RuntimeProvider', 'resume', await restored.resume(resume), resume);
     assert.equal(result.runtime_session_id, 'hosted-session-1');
-    assert.deepEqual(driver.calls.map(([method]) => method), ['resume']);
+    assert.deepEqual(
+      driver.calls.map(([method]) => method),
+      ['resume'],
+    );
 
     const send = {
       ...sessionInput(providerId, 'send'),
@@ -208,10 +227,13 @@ for (const [name, Adapter, providerId] of [
     driver.emit({ type: 'message.delta', text: 'resumed' });
     driver.turn.resolve({ stop_reason: 'completed' });
     const events = await collect(restored, providerId, 7);
-    assert.deepEqual(events.map((event) => [event.sequence, event.event_type]), [
-      [8, 'runtime.message.delta'],
-      [9, 'runtime.session.completed'],
-    ]);
+    assert.deepEqual(
+      events.map((event) => [event.sequence, event.event_type]),
+      [
+        [8, 'runtime.message.delta'],
+        [9, 'runtime.session.completed'],
+      ],
+    );
   });
 }
 
@@ -241,7 +263,9 @@ test('DeepSeek Harness adapter is the ACP bridge and does not import Cordis or M
     capabilities: ['instructions'],
     external_dependency: '@agentclientprotocol/sdk',
   });
-  assert.throws(() => { HOSTED_RUNTIME_ADAPTERS['deepseek-harness'].capabilities.push('governed_tools'); }, TypeError);
+  assert.throws(() => {
+    HOSTED_RUNTIME_ADAPTERS['deepseek-harness'].capabilities.push('governed_tools');
+  }, TypeError);
 });
 
 test('unknown driver events and malformed stop reasons terminate without false success', async () => {
@@ -269,11 +293,12 @@ test('hosted adapters bound input, active turns and non-settling teardown', asyn
   create.spec.limits.max_duration_ms = 10;
   await provider.create(create);
   await assert.rejects(
-    () => provider.send({
-      ...sessionInput('runtime:codex-bounds', 'send'),
-      turn_id: 'turn:oversized',
-      message: { role: 'user', content: 'x'.repeat(1025) },
-    }),
+    () =>
+      provider.send({
+        ...sessionInput('runtime:codex-bounds', 'send'),
+        turn_id: 'turn:oversized',
+        message: { role: 'user', content: 'x'.repeat(1025) },
+      }),
     (error) => error.error_code === 'budget_exceeded',
   );
   await provider.send({
@@ -292,38 +317,51 @@ test('hosted adapters bound input, active turns and non-settling teardown', asyn
 test('hosted create deadline cancels a runtime identity published late', async () => {
   let release;
   const driver = new FakeHostedDriver();
-  driver.create = () => new Promise((resolve) => { release = resolve; });
+  driver.create = () =>
+    new Promise((resolve) => {
+      release = resolve;
+    });
   const provider = runtime(ClaudeCodeRuntimeProvider, 'runtime:claude-create-timeout', driver);
   const input = createInput('runtime:claude-create-timeout');
   input.spec.limits.max_duration_ms = 5;
-  await assert.rejects(() => provider.create(input), (error) => error.error_code === 'timeout');
+  await assert.rejects(
+    () => provider.create(input),
+    (error) => error.error_code === 'timeout',
+  );
   release({ runtime_session_id: 'late-runtime', effect_boundary: 'instructions_only', resumable: false });
   await new Promise((resolve) => setTimeout(resolve, 35));
-  assert.equal(driver.calls.some(([method, value]) => method === 'cancel' && value.runtime_session_id === 'late-runtime'), true);
+  assert.equal(
+    driver.calls.some(([method, value]) => method === 'cancel' && value.runtime_session_id === 'late-runtime'),
+    true,
+  );
 });
 
 test('runtime identity collision quarantines the active owner before rejecting reuse', async () => {
   const driver = new FakeHostedDriver();
   const provider = runtime(CodexRuntimeProvider, 'runtime:codex-collision', driver);
   await provider.create(createInput('runtime:codex-collision'));
-  await assert.rejects(
-    () => provider.create(createInput('runtime:codex-collision', 'session:hosted-2')),
-    /reused a session identity/,
-  );
+  await assert.rejects(() => provider.create(createInput('runtime:codex-collision', 'session:hosted-2')), /reused a session identity/);
   const events = await collect(provider, 'runtime:codex-collision');
   assert.equal(events.at(-1).event_type, 'runtime.session.failed');
   assert.equal(events.at(-1).payload.error_code, 'protocol_error');
-  await assert.rejects(() => provider.send({
-    ...sessionInput('runtime:codex-collision', 'send'),
-    turn_id: 'turn:quarantined',
-    message: { role: 'user', content: 'must not run' },
-  }), /cannot accept/);
+  await assert.rejects(
+    () =>
+      provider.send({
+        ...sessionInput('runtime:codex-collision', 'send'),
+        turn_id: 'turn:quarantined',
+        message: { role: 'user', content: 'must not run' },
+      }),
+    /cannot accept/,
+  );
 });
 
 test('close fences a pending create and cancels its late published identity', async () => {
   let release;
   const driver = new FakeHostedDriver();
-  driver.create = () => new Promise((resolve) => { release = resolve; });
+  driver.create = () =>
+    new Promise((resolve) => {
+      release = resolve;
+    });
   const provider = runtime(ClaudeCodeRuntimeProvider, 'runtime:claude-close-create', driver);
   const creation = provider.create(createInput('runtime:claude-close-create'));
   const rejected = assert.rejects(() => creation, /interrupted by provider close/);
@@ -332,7 +370,10 @@ test('close fences a pending create and cancels its late published identity', as
   await rejected;
   release({ runtime_session_id: 'late-after-close', effect_boundary: 'instructions_only', resumable: true });
   await new Promise((resolve) => setTimeout(resolve, 35));
-  assert.equal(driver.calls.some(([method, value]) => method === 'cancel' && value.runtime_session_id === 'late-after-close'), true);
+  assert.equal(
+    driver.calls.some(([method, value]) => method === 'cancel' && value.runtime_session_id === 'late-after-close'),
+    true,
+  );
 });
 
 test('malformed hosted event envelope cannot be followed by false success', async () => {
@@ -354,18 +395,25 @@ test('malformed hosted event envelope cannot be followed by false success', asyn
 test('resume is exclusive and a concurrent cancel prevents false resume success', async () => {
   let release;
   const driver = new FakeHostedDriver();
-  driver.resume = () => new Promise((resolve) => { release = resolve; });
+  driver.resume = () =>
+    new Promise((resolve) => {
+      release = resolve;
+    });
   const provider = runtime(ClaudeCodeRuntimeProvider, 'runtime:claude-resume-race', driver);
   await provider.create(createInput('runtime:claude-resume-race'));
   const resumeInput = { ...sessionInput('runtime:claude-resume-race', 'resume'), expected_sequence: 1 };
   const resuming = provider.resume(resumeInput);
   await new Promise((resolve) => setImmediate(resolve));
   await assert.rejects(() => provider.resume(resumeInput), /cannot resume/);
-  await assert.rejects(() => provider.send({
-    ...sessionInput('runtime:claude-resume-race', 'send'),
-    turn_id: 'turn:during-resume',
-    message: { role: 'user', content: 'must wait' },
-  }), /cannot accept/);
+  await assert.rejects(
+    () =>
+      provider.send({
+        ...sessionInput('runtime:claude-resume-race', 'send'),
+        turn_id: 'turn:during-resume',
+        message: { role: 'user', content: 'must wait' },
+      }),
+    /cannot accept/,
+  );
   await provider.cancel({ ...sessionInput('runtime:claude-resume-race', 'cancel'), reason: 'user cancelled', cascade: true });
   await assert.rejects(() => resuming, /resume was interrupted/);
   release({ effect_boundary: 'instructions_only' });
@@ -379,10 +427,7 @@ test('unconfirmed dispose quarantines the remote identity against ABA reuse', as
   const provider = runtime(CodexRuntimeProvider, 'runtime:codex-dispose-aba', driver);
   await provider.create(createInput('runtime:codex-dispose-aba'));
   await provider.dispose(sessionInput('runtime:codex-dispose-aba', 'dispose'));
-  await assert.rejects(
-    () => provider.create(createInput('runtime:codex-dispose-aba', 'session:hosted-2')),
-    /reused a session identity/,
-  );
+  await assert.rejects(() => provider.create(createInput('runtime:codex-dispose-aba', 'session:hosted-2')), /reused a session identity/);
 });
 
 test('resume timeout terminalizes and cancels the potentially resumed remote session', async () => {
@@ -399,7 +444,10 @@ test('resume timeout terminalizes and cancels the potentially resumed remote ses
   const events = await collect(provider, 'runtime:codex-resume-timeout');
   assert.equal(events.at(-1).payload.error_code, 'timeout');
   await new Promise((resolve) => setTimeout(resolve, 35));
-  assert.equal(driver.calls.some(([method]) => method === 'cancel'), true);
+  assert.equal(
+    driver.calls.some(([method]) => method === 'cancel'),
+    true,
+  );
 });
 
 test('failed create quarantines an unconfirmed published identity against ABA reuse', async () => {
@@ -416,10 +464,7 @@ test('failed create quarantines an unconfirmed published identity against ABA re
     () => provider.create(createInput('runtime:codex-create-aba')),
     (error) => error.error_code === 'policy_denied',
   );
-  await assert.rejects(
-    () => provider.create(createInput('runtime:codex-create-aba', 'session:hosted-2')),
-    /reused a session identity/,
-  );
+  await assert.rejects(() => provider.create(createInput('runtime:codex-create-aba', 'session:hosted-2')), /reused a session identity/);
 });
 
 test('quarantined identities count against the fixed provider admission cap', async () => {
@@ -430,7 +475,9 @@ test('quarantined identities count against the fixed provider admission cap', as
     effect_boundary: 'instructions_only',
     resumable: false,
   });
-  driver.dispose = async () => { throw new Error('remote teardown uncertain'); };
+  driver.dispose = async () => {
+    throw new Error('remote teardown uncertain');
+  };
   const providerId = 'runtime:codex-quarantine-cap';
   const provider = runtime(CodexRuntimeProvider, providerId, driver);
   for (let index = 1; index <= 128; index += 1) {
@@ -450,7 +497,10 @@ test('late create identity remains quarantined when timeout compensation cannot 
   const driver = new FakeHostedDriver();
   driver.create = () => {
     createCount += 1;
-    if (createCount === 1) return new Promise((resolve) => { release = resolve; });
+    if (createCount === 1)
+      return new Promise((resolve) => {
+        release = resolve;
+      });
     return Promise.resolve({ runtime_session_id: 'late-id', effect_boundary: 'instructions_only', resumable: false });
   };
   driver.cancel = () => new Promise(() => {});
@@ -458,13 +508,13 @@ test('late create identity remains quarantined when timeout compensation cannot 
   const provider = runtime(ClaudeCodeRuntimeProvider, providerId, driver);
   const first = createInput(providerId);
   first.spec.limits.max_duration_ms = 5;
-  await assert.rejects(() => provider.create(first), (error) => error.error_code === 'timeout');
+  await assert.rejects(
+    () => provider.create(first),
+    (error) => error.error_code === 'timeout',
+  );
   release({ runtime_session_id: 'late-id', effect_boundary: 'instructions_only', resumable: false });
   await new Promise((resolve) => setTimeout(resolve, 35));
-  await assert.rejects(
-    () => provider.create(createInput(providerId, 'session:hosted-2')),
-    /reused a session identity/,
-  );
+  await assert.rejects(() => provider.create(createInput(providerId, 'session:hosted-2')), /reused a session identity/);
 });
 
 test('confirmed create compensation cannot release an ID beneath an older in-flight create', async () => {
@@ -477,9 +527,14 @@ test('confirmed create compensation cannot release an ID beneath an older in-fli
     if (createCount === 1) {
       return Promise.resolve({ runtime_session_id: 'raced-id', effect_boundary: 'unrestricted', resumable: false });
     }
-    return new Promise((resolve) => { releaseSecondCreate = resolve; });
+    return new Promise((resolve) => {
+      releaseSecondCreate = resolve;
+    });
   };
-  driver.cancel = () => new Promise((resolve) => { confirmCancel = resolve; });
+  driver.cancel = () =>
+    new Promise((resolve) => {
+      confirmCancel = resolve;
+    });
   const providerId = 'runtime:codex-create-fence';
   const provider = runtime(CodexRuntimeProvider, providerId, driver);
   const first = provider.create(createInput(providerId));
@@ -487,7 +542,10 @@ test('confirmed create compensation cannot release an ID beneath an older in-fli
   const second = provider.create(createInput(providerId, 'session:hosted-2'));
   await new Promise((resolve) => setImmediate(resolve));
   confirmCancel();
-  await assert.rejects(() => first, (error) => error.error_code === 'policy_denied');
+  await assert.rejects(
+    () => first,
+    (error) => error.error_code === 'policy_denied',
+  );
   releaseSecondCreate({ runtime_session_id: 'raced-id', effect_boundary: 'instructions_only', resumable: false });
   await assert.rejects(() => second, /reused a session identity/);
 });
@@ -501,7 +559,9 @@ test('confirmed dispose cannot release an ID beneath an in-flight create', async
     if (createCount === 1) {
       return Promise.resolve({ runtime_session_id: 'dispose-raced-id', effect_boundary: 'instructions_only', resumable: false });
     }
-    return new Promise((resolve) => { releaseSecondCreate = resolve; });
+    return new Promise((resolve) => {
+      releaseSecondCreate = resolve;
+    });
   };
   const providerId = 'runtime:claude-dispose-fence';
   const provider = runtime(ClaudeCodeRuntimeProvider, providerId, driver);
@@ -516,14 +576,20 @@ test('confirmed dispose cannot release an ID beneath an in-flight create', async
 test('late tombstones cannot exceed the cap and degrade admission fail-closed', async () => {
   const releases = [];
   const driver = new FakeHostedDriver();
-  driver.create = () => new Promise((resolve) => { releases.push(resolve); });
+  driver.create = () =>
+    new Promise((resolve) => {
+      releases.push(resolve);
+    });
   driver.cancel = () => new Promise(() => {});
   const providerId = 'runtime:codex-late-cap';
   const provider = runtime(CodexRuntimeProvider, providerId, driver);
   for (let index = 1; index <= 129; index += 1) {
     const input = createInput(providerId, `session:late-cap-${index}`);
     input.spec.limits.max_duration_ms = 1;
-    await assert.rejects(() => provider.create(input), (error) => error.error_code === 'timeout');
+    await assert.rejects(
+      () => provider.create(input),
+      (error) => error.error_code === 'timeout',
+    );
   }
   for (const [index, release] of releases.entries()) {
     release({

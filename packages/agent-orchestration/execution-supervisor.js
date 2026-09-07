@@ -31,14 +31,19 @@ function assertExactKeys(value, expected) {
 
 function withDeadline(promise, remainingMs) {
   if (remainingMs <= 0) {
-    return Promise.reject(new AgentExecutionSupervisorError('root cancellation exceeded its settlement deadline', 'AGENT_EXECUTION_SETTLEMENT_TIMEOUT'));
+    return Promise.reject(
+      new AgentExecutionSupervisorError('root cancellation exceeded its settlement deadline', 'AGENT_EXECUTION_SETTLEMENT_TIMEOUT'),
+    );
   }
   let timer;
   return Promise.race([
     promise,
     new Promise((_, reject) => {
       timer = setTimeout(
-        () => reject(new AgentExecutionSupervisorError('root cancellation exceeded its settlement deadline', 'AGENT_EXECUTION_SETTLEMENT_TIMEOUT')),
+        () =>
+          reject(
+            new AgentExecutionSupervisorError('root cancellation exceeded its settlement deadline', 'AGENT_EXECUTION_SETTLEMENT_TIMEOUT'),
+          ),
         remainingMs,
       );
     }),
@@ -84,9 +89,11 @@ class AgentExecutionSupervisor {
     }
     const task = Promise.resolve().then(() => this.#agentRuntime.send(input));
     this.#agentTasks.set(input.session_id, task);
-    task.finally(() => {
-      if (this.#agentTasks.get(input.session_id) === task) this.#agentTasks.delete(input.session_id);
-    }).catch(() => {});
+    task
+      .finally(() => {
+        if (this.#agentTasks.get(input.session_id) === task) this.#agentTasks.delete(input.session_id);
+      })
+      .catch(() => {});
     return task;
   }
 
@@ -103,9 +110,11 @@ class AgentExecutionSupervisor {
     const task = Promise.resolve().then(() => engine.run(input));
     const tracked = Object.freeze({ engineId, input, key, task });
     this.#workflowTasks.set(key, tracked);
-    task.finally(() => {
-      if (this.#workflowTasks.get(key) === tracked) this.#workflowTasks.delete(key);
-    }).catch(() => {});
+    task
+      .finally(() => {
+        if (this.#workflowTasks.get(key) === tracked) this.#workflowTasks.delete(key);
+      })
+      .catch(() => {});
     return task;
   }
 
@@ -139,28 +148,30 @@ class AgentExecutionSupervisor {
       }
       return deadlineMs - (now - startedAt);
     };
-    const workflows = [...this.#workflowTasks.values()].filter(
-      (tracked) => tracked.input.parent_session_id === value.root_session_id,
-    );
+    const workflows = [...this.#workflowTasks.values()].filter((tracked) => tracked.input.parent_session_id === value.root_session_id);
     const workflowCancellations = workflows.map((tracked) => {
       const engine = this.#workflowEngines.get(tracked.engineId);
-      return Promise.resolve().then(() => engine.cancel({
-        schema_version: 1,
-        engine_id: tracked.engineId,
-        request_id: `${value.request_id}:${tracked.input.workflow.workflow_id}`,
-        parent_session_id: value.root_session_id,
-        workflow_id: tracked.input.workflow.workflow_id,
-        reason: value.reason,
-      }));
+      return Promise.resolve().then(() =>
+        engine.cancel({
+          schema_version: 1,
+          engine_id: tracked.engineId,
+          request_id: `${value.request_id}:${tracked.input.workflow.workflow_id}`,
+          parent_session_id: value.root_session_id,
+          workflow_id: tracked.input.workflow.workflow_id,
+          reason: value.reason,
+        }),
+      );
     });
     const agentTask = this.#agentTasks.get(value.root_session_id) || null;
-    const rootCancellation = Promise.resolve().then(() => this.#agentRuntime.cancel({
-      schema_version: 1,
-      command: 'cancel',
-      session_id: value.root_session_id,
-      reason: value.reason,
-      cascade: true,
-    }));
+    const rootCancellation = Promise.resolve().then(() =>
+      this.#agentRuntime.cancel({
+        schema_version: 1,
+        command: 'cancel',
+        session_id: value.root_session_id,
+        reason: value.reason,
+        cascade: true,
+      }),
+    );
     const pending = [
       ...workflowCancellations,
       ...workflows.map((tracked) => tracked.task),
@@ -184,10 +195,14 @@ class AgentExecutionSupervisor {
       });
     }
     if (root.terminal_event.event_type !== 'session.cancelled') {
-      throw new AgentExecutionSupervisorError('durable root terminal does not correlate to cancellation', 'AGENT_EXECUTION_TERMINAL_CONFLICT', {
-        terminal_event_type: root.terminal_event.event_type,
-        cancellation_accepted: cancellation?.accepted === true,
-      });
+      throw new AgentExecutionSupervisorError(
+        'durable root terminal does not correlate to cancellation',
+        'AGENT_EXECUTION_TERMINAL_CONFLICT',
+        {
+          terminal_event_type: root.terminal_event.event_type,
+          cancellation_accepted: cancellation?.accepted === true,
+        },
+      );
     }
     const rejected = settlements.filter((settlement) => settlement.status === 'rejected');
     if (rejected.length || workflowResults.some((result) => !['cancelled', 'completed', 'failed'].includes(result.status))) {
