@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Resolve producer governance independently of consumer files, inject a minimal discovery capsule only when session/project/source state changes, and keep unverified application/enforcement explicit.
+
 ## [3.4.2] — 2026-09-07
 
 ### Breaking Changes
