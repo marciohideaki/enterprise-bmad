@@ -1,0 +1,85 @@
+{
+  "events": [
+    {
+      "phase": "first-turn",
+      "thread_id": "01a09756-2f6a-7703-9e39-c4bc58337dc4",
+      "event": "sessionStart",
+      "status": "completed",
+      "duration_ms": 50,
+      "entries": [
+        {
+          "kind": "context",
+          "text": "[GOVERNANCE-CONTEXT] G=/home/annonymous/.local/share/hseos/governance-context/62a20a1be2781891\nGlobal governance applies even without local AGENTS.md. Before decisions or absence claims, read G/.enterprise/policies/governance-discovery.md; resolve applicable rules via G/.enterprise/.specs/core/_INDEX.md and constitution/Enterprise-Constitution.md under .specs.\nReuse core packages/contracts before creating local equivalents. Inspect AEW activation separately. Unchecked application/enforcement is NOT VERIFIED, never absent. Negative findings need searched scope and source evidence.\nLoad only applicable documents; preserve their references in handoffs. This capsule proves neither comprehension nor enforcement. If context was lost without lifecycle invalidation, run governance-context explicitly before proceeding."
+        }
+      ]
+    },
+    {
+      "phase": "first-turn",
+      "thread_id": "01a09756-2f6a-7703-9e39-c4bc58337dc4",
+      "event": "userPromptSubmit",
+      "status": "completed",
+      "duration_ms": 55,
+      "entries": []
+    },
+    {
+      "phase": "second-turn",
+      "thread_id": "01a09756-2f6a-7703-9e39-c4bc58337dc4",
+      "event": "userPromptSubmit",
+      "status": "completed",
+      "duration_ms": 47,
+      "entries": []
+    },
+    {
+      "phase": "compact",
+      "thread_id": "01a09756-2f6a-7703-9e39-c4bc58337dc4",
+      "event": "preCompact",
+      "status": "completed",
+      "duration_ms": 48,
+      "entries": []
+    },
+    {
+      "phase": "post-compact",
+      "thread_id": "01a09756-2f6a-7703-9e39-c4bc58337dc4",
+      "event": "sessionStart",
+      "status": "completed",
+      "duration_ms": 50,
+      "entries": [
+        {
+          "kind": "context",
+          "text": "[GOVERNANCE-CONTEXT] G=/home/annonymous/.local/share/hseos/governance-context/62a20a1be2781891\nGlobal governance applies even without local AGENTS.md. Before decisions or absence claims, read G/.enterprise/policies/governance-discovery.md; resolve applicable rules via G/.enterprise/.specs/core/_INDEX.md and constitution/Enterprise-Constitution.md under .specs.\nReuse core packages/contracts before creating local equivalents. Inspect AEW activation separately. Unchecked application/enforcement is NOT VERIFIED, never absent. Negative findings need searched scope and source evidence.\nLoad only applicable documents; preserve their references in handoffs. This capsule proves neither comprehension nor enforcement. If context was lost without lifecycle invalidation, run governance-context explicitly before proceeding."
+        }
+      ]
+    },
+    {
+      "phase": "post-compact",
+      "thread_id": "01a09756-2f6a-7703-9e39-c4bc58337dc4",
+      "event": "userPromptSubmit",
+      "status": "completed",
+      "duration_ms": 52,
+      "entries": []
+    }
+  ],
+  "resume": [
+    {
+      "phase": "resume",
+      "thread_id": "01a09756-2f6a-7703-9e39-c4bc58337dc4",
+      "event": "sessionStart",
+      "status": "completed",
+      "duration_ms": 51,
+      "entries": [
+        {
+          "kind": "context",
+          "text": "[GOVERNANCE-CONTEXT] G=/home/annonymous/.local/share/hseos/governance-context/62a20a1be2781891\nGlobal governance applies even without local AGENTS.md. Before decisions or absence claims, read G/.enterprise/policies/governance-discovery.md; resolve applicable rules via G/.enterprise/.specs/core/_INDEX.md and constitution/Enterprise-Constitution.md under .specs.\nReuse core packages/contracts before creating local equivalents. Inspect AEW activation separately. Unchecked application/enforcement is NOT VERIFIED, never absent. Negative findings need searched scope and source evidence.\nLoad only applicable documents; preserve their references in handoffs. This capsule proves neither comprehension nor enforcement. If context was lost without lifecycle invalidation, run governance-context explicitly before proceeding."
+        }
+      ]
+    },
+    {
+      "phase": "resume",
+      "thread_id": "01a09756-2f6a-7703-9e39-c4bc58337dc4",
+      "event": "userPromptSubmit",
+      "status": "completed",
+      "duration_ms": 56,
+      "entries": []
+    }
+  ]
+}

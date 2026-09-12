@@ -1,0 +1,38 @@
+{
+  "date": "2026-09-12",
+  "status": "passed",
+  "clients": {
+    "codex": {
+      "version": "0.154.0",
+      "transport": "native app-server JSON-RPC and CLI exec",
+      "thread_id": "01a09756-2f6a-7703-9e39-c4bc58337dc4",
+      "startup": true,
+      "unchanged_prompt_context_bytes": 0,
+      "manual_compaction": true,
+      "resume_new_process": true,
+      "source_compact_delivered_before_next_model_request": true
+    },
+    "claude": {
+      "version": "2.1.263",
+      "transport": "native CLI stream-json",
+      "session_id": "bead9c1b-cec7-4ffe-9fe5-b20dfdcba1ac",
+      "startup": true,
+      "unchanged_receipt_second_prompt": true,
+      "manual_compaction": true,
+      "resume_new_process": true,
+      "session_end_success": true
+    }
+  },
+  "active_snapshot": "/home/annonymous/.local/share/hseos/governance-context/62a20a1be2781891",
+  "activation_fix": "Approved four reviewed native currentHash values through config/value/write; hooks/list confirmed trusted. No bypass flag.",
+  "automatic_mid_turn_compaction": "Not forced in this smoke; native manual compaction/source:compact verified. Official runtime contract also covers automatic continuation.",
+  "project_test_state": "Archived outside consumer after verifying only smoke-session rows existed.",
+  "sources": [
+    "https://learn.chatgpt.com/docs/hooks"
+  ],
+  "evidence_hashes": {
+    "codex-events.json": "67ecf18655bdec9aca9058ed32bb792f1ac02097720a333ddaf39379977f6baf",
+    "claude-events.json": "6983c93d2b389aacdb052d971ea18710179515ec0fcb3b002b97345606493b98",
+    "codex-hook-trust.json": "64080e45e7d3636ab94323bb5cf9c4fb15e9aa5deb62e62a16df287a2ac7f476"
+  }
+}

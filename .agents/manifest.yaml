@@ -21,9 +21,9 @@ platforms:
   - goose
 counts:
   skills: 53
-  hooks: 35
+  hooks: 39
   commands: 9
-  handlers: 26
+  handlers: 28
   agents: 16
   mcp_servers: 8
 skills:
@@ -338,6 +338,26 @@ hooks:
     matcher: "*"
     platform_support:
       - claude-code
+  - id: userpromptsubmit-all-governance-context
+    event: UserPromptSubmit
+    matcher: "*"
+    platform_support:
+      - claude-code
+  - id: sessionstart-all-governance-context-invalidate
+    event: SessionStart
+    matcher: "*"
+    platform_support:
+      - claude-code
+  - id: precompact-all-governance-context-invalidate
+    event: PreCompact
+    matcher: "*"
+    platform_support:
+      - claude-code
+  - id: sessionend-all-governance-context-invalidate
+    event: SessionEnd
+    matcher: "*"
+    platform_support:
+      - claude-code
   - id: sessionstart-all-managed-governance-preflight-advisory
     event: SessionStart
     matcher: "*"
@@ -548,6 +568,12 @@ handlers:
   - file: .agents/hooks/handlers/code-index-post-edit.sh
     source: .enterprise/governance/hooks/handlers/code-index-post-edit.sh
     sha256: c8e1b0aa0dad1375ce4d4375ea8090ef825ad09cff2f3a0a91361ccf36ba2791
+  - file: .agents/hooks/handlers/governance-context-state.cjs
+    source: .enterprise/governance/hooks/handlers/governance-context-state.cjs
+    sha256: 3767def30c2c9b50a02d02f24d6f68ee1cb4064c4b6ad3f2fe6aa03c04a9afac
+  - file: .agents/hooks/handlers/governance-context.cjs
+    source: .enterprise/governance/hooks/handlers/governance-context.cjs
+    sha256: 5650bbde19aa9edda3940332f7af24f06c78b5ce9ed46cc754c0b093160391ce
   - file: .agents/hooks/handlers/managed-governance-preflight.sh
     source: .enterprise/governance/hooks/handlers/managed-governance-preflight.sh
     sha256: 2f067333688c969dc476f24480d83f7151682ccd559cdff07cbac3e4fe685961

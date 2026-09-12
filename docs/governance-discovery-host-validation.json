@@ -1,0 +1,63 @@
+{
+  "snapshot": "/home/annonymous/.local/share/hseos/governance-context/62a20a1be2781891",
+  "backup_manifest": "/home/annonymous/.local/state/hseos/governance-context-backups/20260912T202403Z/changes.json",
+  "hashes_verified": 187,
+  "existing_hooks_preserved": true,
+  "measurement_unit": "UTF-8 bytes of injected context; not model tokens",
+  "scenarios": [
+    {
+      "config": "/home/annonymous/.claude/settings.json",
+      "consumer": "/workspace/github/resolv-inc",
+      "previous_context_bytes_per_prompt": 3128,
+      "new_initial_context_bytes": 821,
+      "unchanged_prompts": 20,
+      "unchanged_total_output_bytes": 0,
+      "context_reduction_initial_percent": 73.75,
+      "context_reduction_over_20_prompts_percent": 98.69,
+      "new_prompt_median_process_ms": 47.77,
+      "post_compact_context_bytes": 821
+    },
+    {
+      "config": "/home/annonymous/.claude/settings.json",
+      "consumer": "/workspace/github/resolv-inc/resolv-one-platform",
+      "previous_context_bytes_per_prompt": 3148,
+      "new_initial_context_bytes": 821,
+      "unchanged_prompts": 20,
+      "unchanged_total_output_bytes": 0,
+      "context_reduction_initial_percent": 73.92,
+      "context_reduction_over_20_prompts_percent": 98.7,
+      "new_prompt_median_process_ms": 48.89,
+      "post_compact_context_bytes": 821
+    },
+    {
+      "config": "/home/annonymous/.codex/hooks.json",
+      "consumer": "/workspace/github/resolv-inc",
+      "previous_context_bytes_per_prompt": 3129,
+      "new_initial_context_bytes": 821,
+      "unchanged_prompts": 20,
+      "unchanged_total_output_bytes": 0,
+      "context_reduction_initial_percent": 73.76,
+      "context_reduction_over_20_prompts_percent": 98.69,
+      "new_prompt_median_process_ms": 47.9,
+      "post_compact_context_bytes": 821
+    },
+    {
+      "config": "/home/annonymous/.codex/hooks.json",
+      "consumer": "/workspace/github/resolv-inc/resolv-one-platform",
+      "previous_context_bytes_per_prompt": 3149,
+      "new_initial_context_bytes": 821,
+      "unchanged_prompts": 20,
+      "unchanged_total_output_bytes": 0,
+      "context_reduction_initial_percent": 73.93,
+      "context_reduction_over_20_prompts_percent": 98.7,
+      "new_prompt_median_process_ms": 48.44,
+      "post_compact_context_bytes": 821
+    }
+  ],
+  "behavior_tests_passed": 11,
+  "compiler_checks_passed": 40,
+  "native_client_execution": "verified_codex_0.154.0_claude_2.1.263",
+  "codex_trust_records": "approved_reviewed_native_hashes_via_config_api",
+  "runtime_release_switch": false,
+  "native_evidence": "evidence/governance-native-2026-09-12/summary.json"
+}

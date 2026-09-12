@@ -1,0 +1,56 @@
+{
+  "session_id": "bead9c1b-cec7-4ffe-9fe5-b20dfdcba1ac",
+  "receipt_checks": {
+    "unchanged_receipt_second_turn": true,
+    "post_compact_receipt_reloaded": true,
+    "post_compact_prompt_deduplicated": true
+  },
+  "events": [
+    {
+      "phase": "first-turn",
+      "type": "system",
+      "subtype": "hook_response",
+      "hook_id": "f7aff88f-559b-4a9e-8816-2a13e1ce1fc8",
+      "hook_name": "SessionStart:startup",
+      "hook_event": "SessionStart",
+      "output": "[GOVERNANCE-CONTEXT] G=/home/annonymous/.local/share/hseos/governance-context/62a20a1be2781891\nGlobal governance applies even without local AGENTS.md. Before decisions or absence claims, read G/.enterprise/policies/governance-discovery.md; resolve applicable rules via G/.enterprise/.specs/core/_INDEX.md and constitution/Enterprise-Constitution.md under .specs.\nReuse core packages/contracts before creating local equivalents. Inspect AEW activation separately. Unchecked application/enforcement is NOT VERIFIED, never absent. Negative findings need searched scope and source evidence.\nLoad only applicable documents; preserve their references in handoffs. This capsule proves neither comprehension nor enforcement. If context was lost without lifecycle invalidation, run governance-context explicitly before proceeding.\n",
+      "stdout": "[GOVERNANCE-CONTEXT] G=/home/annonymous/.local/share/hseos/governance-context/62a20a1be2781891\nGlobal governance applies even without local AGENTS.md. Before decisions or absence claims, read G/.enterprise/policies/governance-discovery.md; resolve applicable rules via G/.enterprise/.specs/core/_INDEX.md and constitution/Enterprise-Constitution.md under .specs.\nReuse core packages/contracts before creating local equivalents. Inspect AEW activation separately. Unchecked application/enforcement is NOT VERIFIED, never absent. Negative findings need searched scope and source evidence.\nLoad only applicable documents; preserve their references in handoffs. This capsule proves neither comprehension nor enforcement. If context was lost without lifecycle invalidation, run governance-context explicitly before proceeding.\n",
+      "stderr": "",
+      "exit_code": 0,
+      "outcome": "success",
+      "uuid": "b5a20cf2-936f-461e-9d2a-fa95dfc410cf",
+      "session_id": "bead9c1b-cec7-4ffe-9fe5-b20dfdcba1ac"
+    },
+    {
+      "phase": "compact",
+      "type": "system",
+      "subtype": "hook_response",
+      "hook_id": "b330e76e-1a57-46cf-9ad8-6e0f454c963a",
+      "hook_name": "SessionStart:compact",
+      "hook_event": "SessionStart",
+      "output": "[GOVERNANCE-CONTEXT] G=/home/annonymous/.local/share/hseos/governance-context/62a20a1be2781891\nGlobal governance applies even without local AGENTS.md. Before decisions or absence claims, read G/.enterprise/policies/governance-discovery.md; resolve applicable rules via G/.enterprise/.specs/core/_INDEX.md and constitution/Enterprise-Constitution.md under .specs.\nReuse core packages/contracts before creating local equivalents. Inspect AEW activation separately. Unchecked application/enforcement is NOT VERIFIED, never absent. Negative findings need searched scope and source evidence.\nLoad only applicable documents; preserve their references in handoffs. This capsule proves neither comprehension nor enforcement. If context was lost without lifecycle invalidation, run governance-context explicitly before proceeding.\n",
+      "stdout": "[GOVERNANCE-CONTEXT] G=/home/annonymous/.local/share/hseos/governance-context/62a20a1be2781891\nGlobal governance applies even without local AGENTS.md. Before decisions or absence claims, read G/.enterprise/policies/governance-discovery.md; resolve applicable rules via G/.enterprise/.specs/core/_INDEX.md and constitution/Enterprise-Constitution.md under .specs.\nReuse core packages/contracts before creating local equivalents. Inspect AEW activation separately. Unchecked application/enforcement is NOT VERIFIED, never absent. Negative findings need searched scope and source evidence.\nLoad only applicable documents; preserve their references in handoffs. This capsule proves neither comprehension nor enforcement. If context was lost without lifecycle invalidation, run governance-context explicitly before proceeding.\n",
+      "stderr": "",
+      "exit_code": 0,
+      "outcome": "success",
+      "uuid": "3dcc69a6-b392-41c1-bf60-5cd71913d450",
+      "session_id": "bead9c1b-cec7-4ffe-9fe5-b20dfdcba1ac"
+    }
+  ],
+  "resume": [
+    {
+      "type": "system",
+      "subtype": "hook_response",
+      "hook_id": "5323d556-dba0-4c0e-a173-50e59c272ce2",
+      "hook_name": "SessionStart:resume",
+      "hook_event": "SessionStart",
+      "output": "[GOVERNANCE-CONTEXT] G=/home/annonymous/.local/share/hseos/governance-context/62a20a1be2781891\nGlobal governance applies even without local AGENTS.md. Before decisions or absence claims, read G/.enterprise/policies/governance-discovery.md; resolve applicable rules via G/.enterprise/.specs/core/_INDEX.md and constitution/Enterprise-Constitution.md under .specs.\nReuse core packages/contracts before creating local equivalents. Inspect AEW activation separately. Unchecked application/enforcement is NOT VERIFIED, never absent. Negative findings need searched scope and source evidence.\nLoad only applicable documents; preserve their references in handoffs. This capsule proves neither comprehension nor enforcement. If context was lost without lifecycle invalidation, run governance-context explicitly before proceeding.\n",
+      "stdout": "[GOVERNANCE-CONTEXT] G=/home/annonymous/.local/share/hseos/governance-context/62a20a1be2781891\nGlobal governance applies even without local AGENTS.md. Before decisions or absence claims, read G/.enterprise/policies/governance-discovery.md; resolve applicable rules via G/.enterprise/.specs/core/_INDEX.md and constitution/Enterprise-Constitution.md under .specs.\nReuse core packages/contracts before creating local equivalents. Inspect AEW activation separately. Unchecked application/enforcement is NOT VERIFIED, never absent. Negative findings need searched scope and source evidence.\nLoad only applicable documents; preserve their references in handoffs. This capsule proves neither comprehension nor enforcement. If context was lost without lifecycle invalidation, run governance-context explicitly before proceeding.\n",
+      "stderr": "",
+      "exit_code": 0,
+      "outcome": "success",
+      "uuid": "327d9ba5-9566-478b-aba4-c396c50a48b5",
+      "session_id": "bead9c1b-cec7-4ffe-9fe5-b20dfdcba1ac"
+    }
+  ]
+}

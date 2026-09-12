@@ -114,6 +114,54 @@ hooks:
     platform_support:
       - claude-code
     fallback: Use repository scripts or quality gates when the target platform has no native hook event.
+  - id: userpromptsubmit-all-governance-context
+    event: UserPromptSubmit
+    matcher: "*"
+    type: command
+    command: node .agents/hooks/handlers/governance-context.cjs --cache
+    timeout: 5
+    blocking: true
+    status: active
+    description: Check sources every prompt; emit minimal context only when session, consumer or source state changes.
+    platform_support:
+      - claude-code
+    fallback: Run `hseos governance-context --directory <consumer> --json` before work, after context loss and before absence claims. Unsupported adapters have no automatic gate.
+  - id: sessionstart-all-governance-context-invalidate
+    event: SessionStart
+    matcher: "*"
+    type: command
+    command: node .agents/hooks/handlers/governance-context.cjs --cache --event SessionStart
+    timeout: 5
+    blocking: true
+    status: active
+    description: Invalidate emitted governance context so resumed or compacted sessions reload the capsule.
+    platform_support:
+      - claude-code
+    fallback: Without verified lifecycle events, omit --cache and run explicit discovery after context loss.
+  - id: precompact-all-governance-context-invalidate
+    event: PreCompact
+    matcher: "*"
+    type: command
+    command: node .agents/hooks/handlers/governance-context.cjs --cache --event PreCompact
+    timeout: 5
+    blocking: true
+    status: active
+    description: Invalidate emitted governance context so resumed or compacted sessions reload the capsule.
+    platform_support:
+      - claude-code
+    fallback: Without verified lifecycle events, omit --cache and run explicit discovery after context loss.
+  - id: sessionend-all-governance-context-invalidate
+    event: SessionEnd
+    matcher: "*"
+    type: command
+    command: node .agents/hooks/handlers/governance-context.cjs --cache --event SessionEnd
+    timeout: 5
+    blocking: true
+    status: active
+    description: Invalidate emitted governance context so resumed or compacted sessions reload the capsule.
+    platform_support:
+      - claude-code
+    fallback: Without verified lifecycle events, omit --cache and run explicit discovery after context loss.
   - id: sessionstart-all-managed-governance-preflight-advisory
     event: SessionStart
     matcher: "*"

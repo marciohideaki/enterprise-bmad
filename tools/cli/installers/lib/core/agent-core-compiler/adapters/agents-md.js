@@ -40,6 +40,13 @@ function buildAgentsMdContent(agentsDirName = '.agents') {
 If two instructions conflict, stop and ask for a human decision. Do not
 average standards.
 
+## Governance discovery
+
+Read \`${dir}/instructions/PROJECT.md\` before work and after context loss. Run
+\`hseos governance-context --directory <consumer> --json\` before concluding that
+standards or capabilities are absent. Missing local files do not remove global
+governance; unverified application or enforcement must remain explicitly unknown.
+
 ## Local rules
 
 - Never commit directly to \`main\`, \`master\`, or \`develop\`.

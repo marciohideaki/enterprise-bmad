@@ -27,6 +27,13 @@ If two instructions conflict, stop and ask for a human decision. Do not average 
 - Run repository quality gates before any commit.
 - When `.hseos/config/managed-governance.json` exists and the active adapter has no native `SessionStart` event, run `hseos governance session preflight --json` once before the first task action. The managed-shadow result is advisory; local governance remains authoritative.
 
+## Global Governance Discovery
+
+- Before work, after context loss or project changes, and before any absence claim, run `hseos governance-context --directory <consumer> --json` and read the applicable producer standards.
+- Follow `.enterprise/policies/governance-discovery.md`. A missing consumer AGENTS.md, local package or search match does not establish global absence.
+- Distinguish defined, available, loaded, applied and enforced; uninspected layers remain not verified. Other producers require separate activation evidence.
+- Native prompt hooks check sources and inject only an invalidated capsule; lifecycle events invalidate session receipts. Adapters without verified lifecycle support must run the check explicitly. Preserve producer references in handoffs. Never claim an automatic gate without adapter evidence.
+
 ## Platform-First Capability Intake
 
 - Before implementing shared, platform, cross-cutting, provider, partner, client, contract, schema, request/response, or error-catalog concerns, query the versioned capability graph with `node scripts/governance/validate-capability-graph.js --query <id-or-term>`.

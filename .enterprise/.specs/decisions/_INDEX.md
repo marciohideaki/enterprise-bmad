@@ -89,3 +89,7 @@ The following entries are ADR templates or placeholders for optional activation.
 3. Set status to `Proposed`
 4. Submit via PR with affected-standards linked
 5. After approval: set status to `Accepted`, add to this index
+
+## Discovery hardening
+
+- [ADR-0038 — Global governance discovery](./ADR-0038-global-governance-discovery.md) — Accepted (2026-09-12); source resolution, conditional prompt reload and explicit unknown layers.
