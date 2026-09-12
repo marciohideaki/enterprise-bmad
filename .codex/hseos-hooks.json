@@ -92,6 +92,46 @@
       "codex_equivalent": "portable-handler-script"
     },
     {
+      "id": "userpromptsubmit-all-governance-context",
+      "event": "UserPromptSubmit",
+      "matcher": "*",
+      "command": "node .agents/hooks/handlers/governance-context.cjs --cache",
+      "blocking": true,
+      "description": "Check sources every prompt; emit minimal context only when session, consumer or source state changes.",
+      "fallback": "Run `hseos governance-context --directory <consumer> --json` before work, after context loss and before absence claims. Unsupported adapters have no automatic gate.",
+      "codex_equivalent": "portable-handler-script"
+    },
+    {
+      "id": "sessionstart-all-governance-context-invalidate",
+      "event": "SessionStart",
+      "matcher": "*",
+      "command": "node .agents/hooks/handlers/governance-context.cjs --cache --event SessionStart",
+      "blocking": true,
+      "description": "Invalidate emitted governance context so resumed or compacted sessions reload the capsule.",
+      "fallback": "Without verified lifecycle events, omit --cache and run explicit discovery after context loss.",
+      "codex_equivalent": "portable-handler-script"
+    },
+    {
+      "id": "precompact-all-governance-context-invalidate",
+      "event": "PreCompact",
+      "matcher": "*",
+      "command": "node .agents/hooks/handlers/governance-context.cjs --cache --event PreCompact",
+      "blocking": true,
+      "description": "Invalidate emitted governance context so resumed or compacted sessions reload the capsule.",
+      "fallback": "Without verified lifecycle events, omit --cache and run explicit discovery after context loss.",
+      "codex_equivalent": "portable-handler-script"
+    },
+    {
+      "id": "sessionend-all-governance-context-invalidate",
+      "event": "SessionEnd",
+      "matcher": "*",
+      "command": "node .agents/hooks/handlers/governance-context.cjs --cache --event SessionEnd",
+      "blocking": true,
+      "description": "Invalidate emitted governance context so resumed or compacted sessions reload the capsule.",
+      "fallback": "Without verified lifecycle events, omit --cache and run explicit discovery after context loss.",
+      "codex_equivalent": "portable-handler-script"
+    },
+    {
       "id": "sessionstart-all-managed-governance-preflight-advisory",
       "event": "SessionStart",
       "matcher": "*",
